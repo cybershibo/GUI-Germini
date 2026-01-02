@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-a152843adb7d0605b716.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "GUI-Germini",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "GUI-Germini::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-GUI-Germini-Debug-094aead80aeed590425c.json",
+					"name" : "GUI-Germini",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "GUI-Germini_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-GUI-Germini_autogen-Debug-f3e6c6f750742c4ee693.json",
+					"name" : "GUI-Germini_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "GUI-Germini_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-GUI-Germini_autogen_timestamp_deps-Debug-f8e5882e5366e65cbc95.json",
+					"name" : "GUI-Germini_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/cybershibo/Desktop/QtProjects/GUI-Germini/build/Desktop_Qt_6_10_1_MinGW_64_bit-Debug",
+		"source" : "C:/Users/cybershibo/Desktop/QtProjects/GUI-Germini"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}
