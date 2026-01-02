@@ -43,14 +43,27 @@ private:
     QSerialPort *serialPort;
     QChart *chart;
     QChartView *chartView;
-    QLineSeries *series;
+    QLineSeries *seriesTemperature;
+    QLineSeries *seriesHumidity;
     QValueAxis *axisX;
     QValueAxis *axisY;
     QTimer *graphTimer;
     QDateTime startTime;
-    double currentValue;
+    double currentTemperature;
+    double currentHumidity;
     int pointCount;
-    static const int MAX_POINTS = 1000000;
+    static const int MAX_POINTS = 1000;
+    
+    // Buffer para datos seriales (pueden llegar fragmentados)
+    QString serialBuffer;
+    
+    // Slots para control de motores
+    void onMotorSliderChanged(int motor, int value);
+    void onMotorSpinBoxChanged(int motor, int value);
+    
+    // Funciones para la consola
+    void appendToConsole(const QString &message, const QString &type = "INFO");
+    void onClearConsole();
 };
 
 #endif // MAINWINDOW_H
