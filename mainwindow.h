@@ -52,7 +52,7 @@ private:
     double currentTemperature;
     double currentHumidity;
     int pointCount;
-    static const int MAX_POINTS = 1000;
+    static const int MAX_POINTS = 10000000;
     
     // Buffer para datos seriales (pueden llegar fragmentados)
     QString serialBuffer;

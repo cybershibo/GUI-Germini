@@ -342,6 +342,9 @@ void MainWindow::onSerialDataReceived()
                 }
                 
                 ui->statusbar->showMessage(QString("Temp: %1°C, Hum: %2%").arg(currentTemperature, 0, 'f', 1).arg(currentHumidity, 0, 'f', 1), 1000);
+                
+                // Actualizar gráfico inmediatamente cuando se reciben nuevos datos
+                updateGraph();
             }
         }
         // Formato legacy para compatibilidad
@@ -358,7 +361,7 @@ void MainWindow::onSerialDataReceived()
 
 void MainWindow::updateGraph()
 {
-    if (seriesTemperature && seriesHumidity) {
+    if (seriesTemperature && seriesHumidity && chart) {
         // Calcular tiempo transcurrido en segundos
         qint64 elapsed = startTime.msecsTo(QDateTime::currentDateTime());
         double timeSeconds = elapsed / 1000.0;
@@ -368,30 +371,41 @@ void MainWindow::updateGraph()
         bool validTemp = (currentTemperature > -50 && currentTemperature < 100);
         bool validHum = (currentHumidity >= 0 && currentHumidity <= 100);
         
+        // Variables para rastrear si se agregaron nuevos puntos
+        bool addedPoints = false;
+        
         // Agregar puntos al gráfico solo si son válidos
         if (validTemp) {
             seriesTemperature->append(timeSeconds, currentTemperature);
+            addedPoints = true;
         }
         if (validHum) {
             seriesHumidity->append(timeSeconds, currentHumidity);
+            addedPoints = true;
         }
         
         // Solo incrementar contador si agregamos al menos un punto válido
-        if (validTemp || validHum) {
+        if (addedPoints) {
             pointCount++;
         }
 
         // Limitar número de puntos para mejor rendimiento
         if (pointCount > MAX_POINTS) {
             int removeCount = pointCount - MAX_POINTS;
-            seriesTemperature->removePoints(0, removeCount);
-            seriesHumidity->removePoints(0, removeCount);
+            if (seriesTemperature->count() > removeCount) {
+                seriesTemperature->removePoints(0, removeCount);
+            }
+            if (seriesHumidity->count() > removeCount) {
+                seriesHumidity->removePoints(0, removeCount);
+            }
             pointCount = MAX_POINTS;
         }
 
         // Ajustar rango del eje X para mostrar últimos 60 segundos
         if (timeSeconds > 60) {
             axisX->setRange(timeSeconds - 60, timeSeconds);
+        } else {
+            axisX->setRange(0, 60);
         }
 
         // Ajustar rango del eje Y dinámicamente
@@ -409,6 +423,11 @@ void MainWindow::updateGraph()
                 if (range < 10) range = 10; // Mínimo 10 unidades de rango
                 axisY->setRange(qMax(0.0, minVal - range * 0.1), maxVal + range * 0.1);
             }
+        }
+        
+        // Forzar actualización visual del gráfico
+        if (chartView) {
+            chartView->update();
         }
     }
 }
