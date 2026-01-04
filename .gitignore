@@ -1,0 +1,41 @@
+build
+
+# Compiled object files
+# Archivos objeto (C++)
+*.o
+*.exe
+
+# Archivos de moc, rcc y uic generados por Qt (C++ con Widgets)
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# Archivos de respaldo y temporales
+*.bak
+*~
+*.swp
+
+# Archivos de build generados por qmake/CMake/QtCreator
+Makefile
+CMakeLists.txt.user
+*.pro.user
+*.pro.user.*
+*.qmlproject.user
+*.autosave
+build-*/
+bin/
+debug/
+release/
+
+# Configuración y cachés
+.DS_Store
+*.log
+
+# Carpetas ocultas de Python (si existe tooling mixto)
+__pycache__/
+*.pyc
+
+*.idx.*
+*.obj
+build/Desktop_Qt_6_10_1_MinGW_64_bit-Debug/.ninja_deps
+build/Desktop_Qt_6_10_1_MinGW_64_bit-Debug/.ninja_log
