@@ -51,8 +51,9 @@ private:
     QDateTime startTime;
     double currentTemperature;
     double currentHumidity;
+    double currentLight;
     int pointCount;
-    static const int MAX_POINTS = 10000000;
+    static const int MAX_POINTS = 1000000000;
     
     // Buffer para datos seriales (pueden llegar fragmentados)
     QString serialBuffer;
@@ -64,6 +65,17 @@ private:
     // Funciones para la consola
     void appendToConsole(const QString &message, const QString &type = "INFO");
     void onClearConsole();
+    
+    // Funciones para PID
+    void onSetSetpoint();
+    void onSetKP();
+    void onSetKI();
+    void onSetKD();
+    void onEnablePID();
+    void onDisablePID();
+    
+    // Función para actualizar métricas de sensores
+    void updateSensorMetrics();
 };
 
 #endif // MAINWINDOW_H

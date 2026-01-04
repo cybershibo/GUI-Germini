@@ -459,6 +459,6 @@ C:/Users/cybershibo/Desktop/QtProjects/GUI-Germini/mainwindow.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
  mdp:C:/Users/cybershibo/Desktop/QtProjects/GUI-Germini/build/Desktop_Qt_6_10_1_MinGW_64_bit-Debug/GUI-Germini_autogen/moc_predefs.h
  mdp:C:/Users/cybershibo/Desktop/QtProjects/GUI-Germini/mainwindow.h
+C:/Users/cybershibo/Desktop/QtProjects/GUI-Germini/main.cpp
 C:/Users/cybershibo/Desktop/QtProjects/GUI-Germini/mainwindow.cpp
  uic:ui_mainwindow.h
-C:/Users/cybershibo/Desktop/QtProjects/GUI-Germini/main.cpp

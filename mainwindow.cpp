@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     , graphTimer(nullptr)
     , currentTemperature(0.0)
     , currentHumidity(0.0)
+    , currentLight(0.0)
     , pointCount(0)
     , serialBuffer("")
 {
@@ -73,6 +74,14 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Conectar botón de limpiar consola
     connect(ui->btnClearConsole, &QPushButton::clicked, this, &MainWindow::onClearConsole);
+    
+    // Conectar controles PID
+    connect(ui->btnSetSetpoint, &QPushButton::clicked, this, &MainWindow::onSetSetpoint);
+    connect(ui->btnSetKP, &QPushButton::clicked, this, &MainWindow::onSetKP);
+    connect(ui->btnSetKI, &QPushButton::clicked, this, &MainWindow::onSetKI);
+    connect(ui->btnSetKD, &QPushButton::clicked, this, &MainWindow::onSetKD);
+    connect(ui->btnEnablePID, &QPushButton::clicked, this, &MainWindow::onEnablePID);
+    connect(ui->btnDisablePID, &QPushButton::clicked, this, &MainWindow::onDisablePID);
 
     // Actualizar puertos disponibles
     refreshSerialPorts();
@@ -144,23 +153,16 @@ void MainWindow::setupChart()
 
 void MainWindow::connectAllButtons()
 {
-    // Tab 1
+    // Tab 2 (Control) - Los botones btn1_1, btn1_2, btn1_3, btn1_4 están ahora en la pestaña de Control
     connect(ui->btn1_1, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
     connect(ui->btn1_2, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
     connect(ui->btn1_3, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
     connect(ui->btn1_4, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-
-    // Tab 2
-    connect(ui->btn2_1, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-    connect(ui->btn2_2, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-    connect(ui->btn2_3, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-    connect(ui->btn2_4, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-
-    // Tab 3
-    connect(ui->btn3_1, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-    connect(ui->btn3_2, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-    connect(ui->btn3_3, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-    connect(ui->btn3_4, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
+    
+    // Nota: Los botones btn2_x y btn3_x fueron eliminados al reorganizar las pestañas
+    // La pestaña 1 ahora es Configuración (sin botones)
+    // La pestaña 2 es Control (con btn1_x)
+    // La pestaña 3 es PID (con controles propios conectados en el constructor)
 }
 
 void MainWindow::onButtonClicked()
@@ -320,8 +322,8 @@ void MainWindow::onSerialDataReceived()
         // Mostrar en consola todos los datos recibidos
         appendToConsole(dataString, "RX");
         
-        // Procesar datos recibidos del DHT22
-        // Formato esperado: "DATA:TEMP:XX.XX:HUM:XX.XX"
+        // Procesar datos recibidos del DHT22 y sensor de luz
+        // Formato esperado: "DATA:TEMP:XX.XX:HUM:XX.XX:LIGHT:XXX"
         if (dataString.startsWith("DATA:TEMP:")) {
             int tempStart = 10; // "DATA:TEMP:" tiene 10 caracteres
             int tempEnd = dataString.indexOf(":HUM:");
@@ -335,17 +337,59 @@ void MainWindow::onSerialDataReceived()
                 
                 // Extraer humedad
                 int humStart = tempEnd + 5; // ":HUM:" tiene 5 caracteres
-                QString humStr = dataString.mid(humStart);
-                double hum = humStr.toDouble(&ok);
-                if (ok && hum >= 0 && hum <= 100) { // Validar rango razonable
-                    currentHumidity = hum;
+                int humEnd = dataString.indexOf(":LIGHT:", humStart);
+                if (humEnd > humStart) {
+                    QString humStr = dataString.mid(humStart, humEnd - humStart);
+                    double hum = humStr.toDouble(&ok);
+                    if (ok && hum >= 0 && hum <= 100) { // Validar rango razonable
+                        currentHumidity = hum;
+                    }
+                    
+                    // Extraer luz
+                    int lightStart = humEnd + 7; // ":LIGHT:" tiene 7 caracteres
+                    QString lightStr = dataString.mid(lightStart);
+                    double light = lightStr.toDouble(&ok);
+                    if (ok && light >= 0) {
+                        currentLight = light;
+                    }
+                } else {
+                    // Formato sin luz (compatibilidad)
+                    QString humStr = dataString.mid(humStart);
+                    double hum = humStr.toDouble(&ok);
+                    if (ok && hum >= 0 && hum <= 100) {
+                        currentHumidity = hum;
+                    }
                 }
                 
-                ui->statusbar->showMessage(QString("Temp: %1°C, Hum: %2%").arg(currentTemperature, 0, 'f', 1).arg(currentHumidity, 0, 'f', 1), 1000);
+                // Actualizar métricas de sensores
+                updateSensorMetrics();
+                
+                ui->statusbar->showMessage(QString("Temp: %1°C, Hum: %2%, Luz: %3").arg(currentTemperature, 0, 'f', 1).arg(currentHumidity, 0, 'f', 1).arg(currentLight, 0, 'f', 0), 1000);
                 
                 // Actualizar gráfico inmediatamente cuando se reciben nuevos datos
                 updateGraph();
             }
+        }
+        // Procesar salida del PID
+        else if (dataString.startsWith("PID_OUTPUT:")) {
+            int outputStart = 11; // "PID_OUTPUT:" tiene 11 caracteres
+            int outputEnd = dataString.indexOf(" ERROR:");
+            if (outputEnd > outputStart) {
+                QString outputStr = dataString.mid(outputStart, outputEnd - outputStart);
+                bool ok;
+                double output = outputStr.toDouble(&ok);
+                if (ok) {
+                    ui->labelPIDOutput->setText(QString("Salida PID: %1").arg(output, 0, 'f', 1));
+                }
+            }
+        }
+        // Procesar estado del PID
+        else if (dataString == "PID ACTIVADO") {
+            ui->labelPIDStatus->setText("Estado del PID: Activado");
+        }
+        else if (dataString == "PID DESACTIVADO") {
+            ui->labelPIDStatus->setText("Estado del PID: Desactivado");
+            ui->labelPIDOutput->setText("Salida PID: --");
         }
         // Formato legacy para compatibilidad
         else if (dataString.startsWith("DATA:")) {
@@ -503,4 +547,58 @@ void MainWindow::onClearConsole()
         ui->consoleTextEdit->clear();
         appendToConsole("Consola limpiada", "INFO");
     }
+}
+
+void MainWindow::updateSensorMetrics()
+{
+    // Actualizar etiquetas de sensores en la pestaña de Control
+    ui->labelTempValue->setText(QString("%1 °C").arg(currentTemperature, 0, 'f', 1));
+    ui->labelHumValue->setText(QString("%1 %").arg(currentHumidity, 0, 'f', 1));
+    ui->labelLightValue->setText(QString("%1").arg(currentLight, 0, 'f', 0));
+}
+
+void MainWindow::onSetSetpoint()
+{
+    double setpoint = ui->spinBoxSetpoint->value();
+    QString command = QString("SET_SETPOINT:%1").arg(setpoint, 0, 'f', 1);
+    sendCommand(command);
+    appendToConsole(QString("Setpoint establecido a %1°C").arg(setpoint, 0, 'f', 1), "INFO");
+}
+
+void MainWindow::onSetKP()
+{
+    double kp = ui->spinBoxKP->value();
+    QString command = QString("SET_KP:%1").arg(kp, 0, 'f', 2);
+    sendCommand(command);
+    appendToConsole(QString("Kp establecido a %1").arg(kp, 0, 'f', 2), "INFO");
+}
+
+void MainWindow::onSetKI()
+{
+    double ki = ui->spinBoxKI->value();
+    QString command = QString("SET_KI:%1").arg(ki, 0, 'f', 2);
+    sendCommand(command);
+    appendToConsole(QString("Ki establecido a %1").arg(ki, 0, 'f', 2), "INFO");
+}
+
+void MainWindow::onSetKD()
+{
+    double kd = ui->spinBoxKD->value();
+    QString command = QString("SET_KD:%1").arg(kd, 0, 'f', 2);
+    sendCommand(command);
+    appendToConsole(QString("Kd establecido a %1").arg(kd, 0, 'f', 2), "INFO");
+}
+
+void MainWindow::onEnablePID()
+{
+    sendCommand("ENABLE_PID");
+    ui->labelPIDStatus->setText("Estado del PID: Activado");
+    appendToConsole("PID activado", "INFO");
+}
+
+void MainWindow::onDisablePID()
+{
+    sendCommand("DISABLE_PID");
+    ui->labelPIDStatus->setText("Estado del PID: Desactivado");
+    appendToConsole("PID desactivado", "INFO");
 }
