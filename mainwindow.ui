@@ -659,6 +659,43 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_graph">
           <item>
+           <widget class="QLabel" name="labelGraphVars">
+            <property name="text">
+             <string>Variables a mostrar:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxTemp">
+            <property name="text">
+             <string>Temperatura</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxHum">
+            <property name="text">
+             <string>Humedad</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxLight">
+            <property name="text">
+             <string>Luz</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="horizontalSpacer_graph">
             <property name="orientation">
              <enum>Qt::Orientation::Horizontal</enum>

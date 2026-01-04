@@ -78,6 +78,11 @@ MainWindow::MainWindow(QWidget *parent)
     // Conectar botón de limpiar consola
     connect(ui->btnClearConsole, &QPushButton::clicked, this, &MainWindow::onClearConsole);
     
+    // Conectar checkboxes de variables del gráfico para selección dinámica
+    connect(ui->checkBoxTemp, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
+    connect(ui->checkBoxHum, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
+    connect(ui->checkBoxLight, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
+    
     // Conectar botón de exportar CSV
     connect(ui->btnExportCSV, &QPushButton::clicked, this, &MainWindow::onExportCSV);
     
@@ -111,7 +116,7 @@ void MainWindow::setupChart()
 {
     chart = new QChart();
     
-    // Crear series para temperatura y humedad
+    // Crear series para temperatura, humedad y luz
     seriesTemperature = new QLineSeries();
     seriesTemperature->setName("Temperatura (°C)");
     seriesTemperature->setColor(Qt::red);
@@ -119,10 +124,15 @@ void MainWindow::setupChart()
     seriesHumidity = new QLineSeries();
     seriesHumidity->setName("Humedad (%)");
     seriesHumidity->setColor(Qt::blue);
+    
+    seriesLight = new QLineSeries();
+    seriesLight->setName("Luz");
+    seriesLight->setColor(Qt::green);
 
     chart->addSeries(seriesTemperature);
     chart->addSeries(seriesHumidity);
-    chart->setTitle("DHT22 - Temperatura y Humedad en Tiempo Real");
+    chart->addSeries(seriesLight);
+    chart->setTitle("Sensores en Tiempo Real");
     chart->setAnimationOptions(QChart::SeriesAnimations);
 
     axisX = new QValueAxis();
@@ -131,6 +141,7 @@ void MainWindow::setupChart()
     chart->addAxis(axisX, Qt::AlignBottom);
     seriesTemperature->attachAxis(axisX);
     seriesHumidity->attachAxis(axisX);
+    seriesLight->attachAxis(axisX);
 
     axisY = new QValueAxis();
     axisY->setTitleText("Valor");
@@ -138,6 +149,7 @@ void MainWindow::setupChart()
     chart->addAxis(axisY, Qt::AlignLeft);
     seriesTemperature->attachAxis(axisY);
     seriesHumidity->attachAxis(axisY);
+    seriesLight->attachAxis(axisY);
 
     chart->legend()->setVisible(true);
     chart->legend()->setAlignment(Qt::AlignBottom);
@@ -155,6 +167,9 @@ void MainWindow::setupChart()
     graphTimer = new QTimer(this);
     connect(graphTimer, &QTimer::timeout, this, &MainWindow::updateGraph);
     startTime = QDateTime::currentDateTime();
+    
+    // Establecer visibilidad inicial según checkboxes
+    onVariableCheckboxChanged();
 }
 
 void MainWindow::connectAllButtons()
@@ -411,12 +426,11 @@ void MainWindow::onSerialDataReceived()
 
 void MainWindow::updateGraph()
 {
-    if (seriesTemperature && seriesHumidity && chart) {
+    if (seriesTemperature && seriesHumidity && seriesLight && chart) {
         // Calcular tiempo transcurrido en segundos
         qint64 elapsed = startTime.msecsTo(QDateTime::currentDateTime());
         double timeSeconds = elapsed / 1000.0;
 
-        // Solo agregar puntos si tenemos valores válidos (no cero o valores inválidos)
         // Verificar que los valores sean razonables antes de agregarlos
         bool validTemp = (currentTemperature > -50 && currentTemperature < 100);
         bool validHum = (currentHumidity >= 0 && currentHumidity <= 100);
@@ -438,13 +452,17 @@ void MainWindow::updateGraph()
         // Variables para rastrear si se agregaron nuevos puntos
         bool addedPoints = false;
         
-        // Agregar puntos al gráfico solo si son válidos
-        if (validTemp) {
+        // Agregar puntos al gráfico solo si son válidos y están seleccionados
+        if (validTemp && ui->checkBoxTemp->isChecked()) {
             seriesTemperature->append(timeSeconds, currentTemperature);
             addedPoints = true;
         }
-        if (validHum) {
+        if (validHum && ui->checkBoxHum->isChecked()) {
             seriesHumidity->append(timeSeconds, currentHumidity);
+            addedPoints = true;
+        }
+        if (validLight && ui->checkBoxLight->isChecked()) {
+            seriesLight->append(timeSeconds, currentLight);
             addedPoints = true;
         }
         
@@ -462,6 +480,9 @@ void MainWindow::updateGraph()
             if (seriesHumidity->count() > removeCount) {
                 seriesHumidity->removePoints(0, removeCount);
             }
+            if (seriesLight->count() > removeCount) {
+                seriesLight->removePoints(0, removeCount);
+            }
             pointCount = MAX_POINTS;
         }
 
@@ -472,11 +493,28 @@ void MainWindow::updateGraph()
             axisX->setRange(0, 60);
         }
 
-        // Ajustar rango del eje Y dinámicamente
-        if (validTemp || validHum) {
-            double maxVal = qMax(validTemp ? currentTemperature : 0, validHum ? currentHumidity : 0);
-            double minVal = qMin(validTemp ? currentTemperature : 0, validHum ? currentHumidity : 0);
-            
+        // Ajustar rango del eje Y dinámicamente según variables seleccionadas
+        double maxVal = 0;
+        double minVal = 0;
+        bool hasValidData = false;
+        
+        if (validTemp && ui->checkBoxTemp->isChecked()) {
+            maxVal = qMax(maxVal, currentTemperature);
+            minVal = minVal == 0 ? currentTemperature : qMin(minVal, currentTemperature);
+            hasValidData = true;
+        }
+        if (validHum && ui->checkBoxHum->isChecked()) {
+            maxVal = qMax(maxVal, currentHumidity);
+            minVal = minVal == 0 ? currentHumidity : qMin(minVal, currentHumidity);
+            hasValidData = true;
+        }
+        if (validLight && ui->checkBoxLight->isChecked()) {
+            maxVal = qMax(maxVal, currentLight);
+            minVal = minVal == 0 ? currentLight : qMin(minVal, currentLight);
+            hasValidData = true;
+        }
+        
+        if (hasValidData) {
             // Asegurar un rango mínimo razonable
             if (maxVal < 1 && minVal < 1) {
                 // Si ambos valores son muy pequeños, usar rango por defecto
@@ -624,10 +662,31 @@ void MainWindow::onDisablePID()
     appendToConsole("PID desactivado", "INFO");
 }
 
+void MainWindow::onVariableCheckboxChanged()
+{
+    if (!seriesTemperature || !seriesHumidity || !seriesLight) return;
+    
+    // Mostrar/ocultar series según checkboxes seleccionados
+    seriesTemperature->setVisible(ui->checkBoxTemp->isChecked());
+    seriesHumidity->setVisible(ui->checkBoxHum->isChecked());
+    seriesLight->setVisible(ui->checkBoxLight->isChecked());
+    
+    // Actualizar gráfico visualmente
+    if (chartView) {
+        chartView->update();
+    }
+}
+
 void MainWindow::onExportCSV()
 {
     if (graphData.isEmpty()) {
         QMessageBox::information(this, "Exportar CSV", "No hay datos para exportar.");
+        return;
+    }
+    
+    // Verificar que al menos una variable esté seleccionada
+    if (!ui->checkBoxTemp->isChecked() && !ui->checkBoxHum->isChecked() && !ui->checkBoxLight->isChecked()) {
+        QMessageBox::warning(this, "Exportar CSV", "Por favor seleccione al menos una variable para exportar.");
         return;
     }
     
@@ -654,15 +713,38 @@ void MainWindow::onExportCSV()
     QTextStream out(&file);
     out.setEncoding(QStringConverter::Utf8);
     
-    // Escribir encabezado
-    out << "Tiempo (s),Temperatura (°C),Humedad (%),Luz\n";
+    // Escribir encabezado según variables seleccionadas
+    QStringList headers;
+    headers << "Tiempo (s)";
     
-    // Escribir datos
+    if (ui->checkBoxTemp->isChecked()) {
+        headers << "Temperatura (°C)";
+    }
+    if (ui->checkBoxHum->isChecked()) {
+        headers << "Humedad (%)";
+    }
+    if (ui->checkBoxLight->isChecked()) {
+        headers << "Luz";
+    }
+    
+    out << headers.join(",") << "\n";
+    
+    // Escribir datos solo de las variables seleccionadas
     for (const GraphDataPoint &point : graphData) {
-        out << QString::number(point.time, 'f', 2) << ","
-            << QString::number(point.temperature, 'f', 2) << ","
-            << QString::number(point.humidity, 'f', 2) << ","
-            << QString::number(point.light, 'f', 0) << "\n";
+        QStringList row;
+        row << QString::number(point.time, 'f', 2);
+        
+        if (ui->checkBoxTemp->isChecked()) {
+            row << QString::number(point.temperature, 'f', 2);
+        }
+        if (ui->checkBoxHum->isChecked()) {
+            row << QString::number(point.humidity, 'f', 2);
+        }
+        if (ui->checkBoxLight->isChecked()) {
+            row << QString::number(point.light, 'f', 0);
+        }
+        
+        out << row.join(",") << "\n";
     }
     
     file.close();

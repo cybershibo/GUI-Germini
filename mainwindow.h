@@ -45,6 +45,7 @@ private:
     QChartView *chartView;
     QLineSeries *seriesTemperature;
     QLineSeries *seriesHumidity;
+    QLineSeries *seriesLight;
     QValueAxis *axisX;
     QValueAxis *axisY;
     QTimer *graphTimer;
@@ -77,7 +78,8 @@ private:
     // Función para actualizar métricas de sensores
     void updateSensorMetrics();
     
-    // Función para exportar datos a CSV
+    // Funciones para el gráfico
+    void onVariableCheckboxChanged();
     void onExportCSV();
     
     // Estructura para almacenar datos del gráfico
