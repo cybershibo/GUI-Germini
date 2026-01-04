@@ -53,7 +53,7 @@ private:
     double currentHumidity;
     double currentLight;
     int pointCount;
-    static const int MAX_POINTS = 1000000000;
+    static const int MAX_POINTS = 10000;
     
     // Buffer para datos seriales (pueden llegar fragmentados)
     QString serialBuffer;
@@ -76,6 +76,18 @@ private:
     
     // Función para actualizar métricas de sensores
     void updateSensorMetrics();
+    
+    // Función para exportar datos a CSV
+    void onExportCSV();
+    
+    // Estructura para almacenar datos del gráfico
+    struct GraphDataPoint {
+        double time;
+        double temperature;
+        double humidity;
+        double light;
+    };
+    QList<GraphDataPoint> graphData;
 };
 
 #endif // MAINWINDOW_H

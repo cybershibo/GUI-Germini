@@ -11,6 +11,9 @@
 #include <QDateTime>
 #include <QTextCursor>
 #include <QRegularExpression>
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -74,6 +77,9 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Conectar botón de limpiar consola
     connect(ui->btnClearConsole, &QPushButton::clicked, this, &MainWindow::onClearConsole);
+    
+    // Conectar botón de exportar CSV
+    connect(ui->btnExportCSV, &QPushButton::clicked, this, &MainWindow::onExportCSV);
     
     // Conectar controles PID
     connect(ui->btnSetSetpoint, &QPushButton::clicked, this, &MainWindow::onSetSetpoint);
@@ -414,6 +420,20 @@ void MainWindow::updateGraph()
         // Verificar que los valores sean razonables antes de agregarlos
         bool validTemp = (currentTemperature > -50 && currentTemperature < 100);
         bool validHum = (currentHumidity >= 0 && currentHumidity <= 100);
+        bool validLight = (currentLight >= 0);
+        
+        // Guardar datos para exportación CSV
+        GraphDataPoint dataPoint;
+        dataPoint.time = timeSeconds;
+        dataPoint.temperature = validTemp ? currentTemperature : 0;
+        dataPoint.humidity = validHum ? currentHumidity : 0;
+        dataPoint.light = validLight ? currentLight : 0;
+        graphData.append(dataPoint);
+        
+        // Limitar tamaño de datos guardados
+        if (graphData.size() > MAX_POINTS) {
+            graphData.removeFirst();
+        }
         
         // Variables para rastrear si se agregaron nuevos puntos
         bool addedPoints = false;
@@ -600,5 +620,54 @@ void MainWindow::onDisablePID()
 {
     sendCommand("DISABLE_PID");
     ui->labelPIDStatus->setText("Estado del PID: Desactivado");
+    ui->labelPIDOutput->setText("Salida PID: --");
     appendToConsole("PID desactivado", "INFO");
+}
+
+void MainWindow::onExportCSV()
+{
+    if (graphData.isEmpty()) {
+        QMessageBox::information(this, "Exportar CSV", "No hay datos para exportar.");
+        return;
+    }
+    
+    // Obtener nombre de archivo
+    QString fileName = QFileDialog::getSaveFileName(this,
+        "Exportar datos a CSV", "",
+        "CSV Files (*.csv);;All Files (*)");
+    
+    if (fileName.isEmpty()) {
+        return;
+    }
+    
+    // Asegurar extensión .csv
+    if (!fileName.endsWith(".csv", Qt::CaseInsensitive)) {
+        fileName += ".csv";
+    }
+    
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, "Error", "No se pudo crear el archivo CSV.");
+        return;
+    }
+    
+    QTextStream out(&file);
+    out.setEncoding(QStringConverter::Utf8);
+    
+    // Escribir encabezado
+    out << "Tiempo (s),Temperatura (°C),Humedad (%),Luz\n";
+    
+    // Escribir datos
+    for (const GraphDataPoint &point : graphData) {
+        out << QString::number(point.time, 'f', 2) << ","
+            << QString::number(point.temperature, 'f', 2) << ","
+            << QString::number(point.humidity, 'f', 2) << ","
+            << QString::number(point.light, 'f', 0) << "\n";
+    }
+    
+    file.close();
+    
+    QMessageBox::information(this, "Exportar CSV", 
+        QString("Datos exportados exitosamente.\n%1 puntos guardados.").arg(graphData.size()));
+    appendToConsole(QString("Datos exportados a: %1").arg(fileName), "INFO");
 }
