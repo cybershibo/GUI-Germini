@@ -38,6 +38,7 @@ private:
     void sendCommand(const QString &command);
     void refreshSerialPorts();
     void connectAllButtons();
+    void setTabsEnabled(bool enabled); // Habilitar/deshabilitar pestañas según conexión
 
     Ui::MainWindow *ui;
     QSerialPort *serialPort;

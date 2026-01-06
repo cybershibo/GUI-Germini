@@ -118,6 +118,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Inicializar estado de desconexión
     ui->btnDisconnect->setEnabled(false);
+    
+    // Deshabilitar todas las pestañas excepto Configuración al inicio
+    setTabsEnabled(false);
 }
 
 MainWindow::~MainWindow()
@@ -347,6 +350,9 @@ void MainWindow::onConnectClicked()
         ui->statusbar->showMessage(QString("Conectado a %1 a %2 baudios").arg(portName).arg(baudRateText), 2000);
         graphTimer->start(100); // Actualizar gráfico cada 100ms
         appendToConsole(QString("Conectado a %1 a %2 baudios").arg(portName).arg(baudRateText), "INFO");
+        
+        // Habilitar todas las pestañas cuando se conecta
+        setTabsEnabled(true);
     } else {
         QString errorMsg = QString("No se pudo abrir el puerto serial %1.\n\nError: %2\n\n"
                                    "Asegúrese de que:\n"
@@ -369,6 +375,12 @@ void MainWindow::onDisconnectClicked()
         ui->statusbar->showMessage("Desconectado", 2000);
         graphTimer->stop();
         appendToConsole("Desconectado del puerto serial", "INFO");
+        
+        // Deshabilitar todas las pestañas excepto Configuración cuando se desconecta
+        setTabsEnabled(false);
+        
+        // Cambiar a la pestaña de Configuración si estaba en otra
+        ui->tabWidget->setCurrentIndex(0);
     }
 }
 
@@ -1023,4 +1035,21 @@ void MainWindow::onExportCSV()
     QMessageBox::information(this, "Exportar CSV", 
         QString("Datos exportados exitosamente.\n%1 puntos guardados.").arg(graphData.size()));
     appendToConsole(QString("Datos exportados a: %1").arg(fileName), "INFO");
+}
+
+void MainWindow::setTabsEnabled(bool enabled)
+{
+    // Índices de las pestañas:
+    // 0: Configuración (siempre habilitada)
+    // 1: Control
+    // 2: Control PID
+    // 3: Graph
+    // 4: Consola
+    
+    // La pestaña de Configuración (índice 0) siempre está habilitada
+    // Solo habilitamos/deshabilitamos las demás pestañas
+    ui->tabWidget->setTabEnabled(1, enabled); // Control
+    ui->tabWidget->setTabEnabled(2, enabled); // Control PID
+    ui->tabWidget->setTabEnabled(3, enabled); // Graph
+    ui->tabWidget->setTabEnabled(4, enabled); // Consola
 }
