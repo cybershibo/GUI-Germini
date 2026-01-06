@@ -110,6 +110,9 @@ MainWindow::MainWindow(QWidget *parent)
     // Actualizar puertos disponibles
     refreshSerialPorts();
     
+    // Establecer baudrate por defecto a 115200 (más común para ESP32)
+    ui->comboBoxBaudRate->setCurrentText("115200");
+    
     // Mensaje inicial en la consola
     appendToConsole("Sistema iniciado. Esperando conexión...", "INFO");
 
@@ -299,8 +302,38 @@ void MainWindow::onConnectClicked()
         serialPort->close();
     }
 
+    // Obtener el baudrate seleccionado del comboBox
+    QString baudRateText = ui->comboBoxBaudRate->currentText();
+    bool ok;
+    int baudRateValue = baudRateText.toInt(&ok);
+    
+    // Convertir a QSerialPort::BaudRate
+    QSerialPort::BaudRate baudRate = QSerialPort::Baud115200; // Valor por defecto
+    if (ok) {
+        switch (baudRateValue) {
+            case 9600:
+                baudRate = QSerialPort::Baud9600;
+                break;
+            case 19200:
+                baudRate = QSerialPort::Baud19200;
+                break;
+            case 38400:
+                baudRate = QSerialPort::Baud38400;
+                break;
+            case 57600:
+                baudRate = QSerialPort::Baud57600;
+                break;
+            case 115200:
+                baudRate = QSerialPort::Baud115200;
+                break;
+            default:
+                baudRate = QSerialPort::Baud115200;
+                break;
+        }
+    }
+
     serialPort->setPortName(portName);
-    serialPort->setBaudRate(QSerialPort::Baud115200);
+    serialPort->setBaudRate(baudRate);
     serialPort->setDataBits(QSerialPort::Data8);
     serialPort->setParity(QSerialPort::NoParity);
     serialPort->setStopBits(QSerialPort::OneStop);
@@ -310,9 +343,10 @@ void MainWindow::onConnectClicked()
         ui->btnConnect->setEnabled(false);
         ui->btnDisconnect->setEnabled(true);
         ui->comboBoxPort->setEnabled(false);
-        ui->statusbar->showMessage("Conectado a " + portName, 2000);
+        ui->comboBoxBaudRate->setEnabled(false); // Deshabilitar comboBox de baudrate cuando está conectado
+        ui->statusbar->showMessage(QString("Conectado a %1 a %2 baudios").arg(portName).arg(baudRateText), 2000);
         graphTimer->start(100); // Actualizar gráfico cada 100ms
-        appendToConsole(QString("Conectado a %1").arg(portName), "INFO");
+        appendToConsole(QString("Conectado a %1 a %2 baudios").arg(portName).arg(baudRateText), "INFO");
     } else {
         QString errorMsg = QString("No se pudo abrir el puerto serial %1.\n\nError: %2\n\n"
                                    "Asegúrese de que:\n"
@@ -331,6 +365,7 @@ void MainWindow::onDisconnectClicked()
         ui->btnConnect->setEnabled(true);
         ui->btnDisconnect->setEnabled(false);
         ui->comboBoxPort->setEnabled(true);
+        ui->comboBoxBaudRate->setEnabled(true); // Habilitar comboBox de baudrate cuando está desconectado
         ui->statusbar->showMessage("Desconectado", 2000);
         graphTimer->stop();
         appendToConsole("Desconectado del puerto serial", "INFO");
