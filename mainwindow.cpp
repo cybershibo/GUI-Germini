@@ -20,13 +20,22 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , serialPort(nullptr)
     , chart(nullptr)
-    , seriesTemperature(nullptr)
-    , seriesHumidity(nullptr)
+    , seriesTemperature1(nullptr)
+    , seriesTemperature2(nullptr)
+    , seriesTemperatureAvg(nullptr)
+    , seriesHumidity1(nullptr)
+    , seriesHumidity2(nullptr)
+    , seriesHumidityAvg(nullptr)
+    , seriesLight(nullptr)
     , axisX(nullptr)
     , axisY(nullptr)
     , graphTimer(nullptr)
-    , currentTemperature(0.0)
-    , currentHumidity(0.0)
+    , currentTemperature1(0.0)
+    , currentTemperature2(0.0)
+    , currentTemperatureAvg(0.0)
+    , currentHumidity1(0.0)
+    , currentHumidity2(0.0)
+    , currentHumidityAvg(0.0)
     , currentLight(0.0)
     , pointCount(0)
     , serialBuffer("")
@@ -79,8 +88,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnClearConsole, &QPushButton::clicked, this, &MainWindow::onClearConsole);
     
     // Conectar checkboxes de variables del gráfico para selección dinámica
-    connect(ui->checkBoxTemp, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
-    connect(ui->checkBoxHum, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
+    connect(ui->checkBoxTemp1, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
+    connect(ui->checkBoxTemp2, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
+    connect(ui->checkBoxTempAvg, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
+    connect(ui->checkBoxHum1, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
+    connect(ui->checkBoxHum2, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
+    connect(ui->checkBoxHumAvg, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
     connect(ui->checkBoxLight, &QCheckBox::toggled, this, &MainWindow::onVariableCheckboxChanged);
     
     // Conectar botón de exportar CSV
@@ -116,39 +129,70 @@ void MainWindow::setupChart()
 {
     chart = new QChart();
     
-    // Crear series para temperatura, humedad y luz
-    seriesTemperature = new QLineSeries();
-    seriesTemperature->setName("Temperatura (°C)");
-    seriesTemperature->setColor(Qt::red);
+    // Crear series para temperatura (ambos sensores y promedio)
+    seriesTemperature1 = new QLineSeries();
+    seriesTemperature1->setName("Temp DHT22 #1 (°C)");
+    seriesTemperature1->setColor(Qt::red);
     
-    seriesHumidity = new QLineSeries();
-    seriesHumidity->setName("Humedad (%)");
-    seriesHumidity->setColor(Qt::blue);
+    seriesTemperature2 = new QLineSeries();
+    seriesTemperature2->setName("Temp DHT22 #2 (°C)");
+    seriesTemperature2->setColor(Qt::magenta);
     
+    seriesTemperatureAvg = new QLineSeries();
+    seriesTemperatureAvg->setName("Temp Promedio (°C)");
+    seriesTemperatureAvg->setColor(Qt::darkRed);
+    
+    // Crear series para humedad (ambos sensores y promedio)
+    seriesHumidity1 = new QLineSeries();
+    seriesHumidity1->setName("Hum DHT22 #1 (%)");
+    seriesHumidity1->setColor(Qt::blue);
+    
+    seriesHumidity2 = new QLineSeries();
+    seriesHumidity2->setName("Hum DHT22 #2 (%)");
+    seriesHumidity2->setColor(Qt::cyan);
+    
+    seriesHumidityAvg = new QLineSeries();
+    seriesHumidityAvg->setName("Hum Promedio (%)");
+    seriesHumidityAvg->setColor(Qt::darkBlue);
+    
+    // Crear serie para luz
     seriesLight = new QLineSeries();
     seriesLight->setName("Luz");
     seriesLight->setColor(Qt::green);
 
-    chart->addSeries(seriesTemperature);
-    chart->addSeries(seriesHumidity);
+    // Agregar todas las series al gráfico
+    chart->addSeries(seriesTemperature1);
+    chart->addSeries(seriesTemperature2);
+    chart->addSeries(seriesTemperatureAvg);
+    chart->addSeries(seriesHumidity1);
+    chart->addSeries(seriesHumidity2);
+    chart->addSeries(seriesHumidityAvg);
     chart->addSeries(seriesLight);
-    chart->setTitle("Sensores en Tiempo Real");
+    chart->setTitle("Sensores DHT22 en Tiempo Real");
     chart->setAnimationOptions(QChart::SeriesAnimations);
 
     axisX = new QValueAxis();
     axisX->setTitleText("Tiempo (segundos)");
     axisX->setRange(0, 60);
     chart->addAxis(axisX, Qt::AlignBottom);
-    seriesTemperature->attachAxis(axisX);
-    seriesHumidity->attachAxis(axisX);
+    seriesTemperature1->attachAxis(axisX);
+    seriesTemperature2->attachAxis(axisX);
+    seriesTemperatureAvg->attachAxis(axisX);
+    seriesHumidity1->attachAxis(axisX);
+    seriesHumidity2->attachAxis(axisX);
+    seriesHumidityAvg->attachAxis(axisX);
     seriesLight->attachAxis(axisX);
 
     axisY = new QValueAxis();
     axisY->setTitleText("Valor");
     axisY->setRange(0, 100);
     chart->addAxis(axisY, Qt::AlignLeft);
-    seriesTemperature->attachAxis(axisY);
-    seriesHumidity->attachAxis(axisY);
+    seriesTemperature1->attachAxis(axisY);
+    seriesTemperature2->attachAxis(axisY);
+    seriesTemperatureAvg->attachAxis(axisY);
+    seriesHumidity1->attachAxis(axisY);
+    seriesHumidity2->attachAxis(axisY);
+    seriesHumidityAvg->attachAxis(axisY);
     seriesLight->attachAxis(axisY);
 
     chart->legend()->setVisible(true);
@@ -343,51 +387,130 @@ void MainWindow::onSerialDataReceived()
         // Mostrar en consola todos los datos recibidos
         appendToConsole(dataString, "RX");
         
-        // Procesar datos recibidos del DHT22 y sensor de luz
-        // Formato esperado: "DATA:TEMP:XX.XX:HUM:XX.XX:LIGHT:XXX"
-        if (dataString.startsWith("DATA:TEMP:")) {
-            int tempStart = 10; // "DATA:TEMP:" tiene 10 caracteres
+        // Procesar datos recibidos de ambos DHT22 y sensor de luz
+        // Formato esperado: "DATA:TEMP1:XX.XX:TEMP2:XX.XX:TEMPAVG:XX.XX:HUM1:XX.XX:HUM2:XX.XX:HUMAVG:XX.XX:LIGHT:XXX"
+        if (dataString.startsWith("DATA:TEMP1:")) {
+            bool ok;
+            // Extraer temperatura sensor 1
+            int temp1Start = 11; // "DATA:TEMP1:" tiene 11 caracteres
+            int temp1End = dataString.indexOf(":TEMP2:", temp1Start);
+            if (temp1End > temp1Start) {
+                QString temp1Str = dataString.mid(temp1Start, temp1End - temp1Start);
+                double temp1 = temp1Str.toDouble(&ok);
+                if (ok && temp1 > -50 && temp1 < 100) {
+                    currentTemperature1 = temp1;
+                }
+                
+                // Extraer temperatura sensor 2
+                int temp2Start = temp1End + 7; // ":TEMP2:" tiene 7 caracteres
+                int temp2End = dataString.indexOf(":TEMPAVG:", temp2Start);
+                if (temp2End > temp2Start) {
+                    QString temp2Str = dataString.mid(temp2Start, temp2End - temp2Start);
+                    double temp2 = temp2Str.toDouble(&ok);
+                    if (ok && temp2 > -50 && temp2 < 100) {
+                        currentTemperature2 = temp2;
+                    }
+                    
+                    // Extraer temperatura promedio
+                    int tempAvgStart = temp2End + 9; // ":TEMPAVG:" tiene 9 caracteres
+                    int tempAvgEnd = dataString.indexOf(":HUM1:", tempAvgStart);
+                    if (tempAvgEnd > tempAvgStart) {
+                        QString tempAvgStr = dataString.mid(tempAvgStart, tempAvgEnd - tempAvgStart);
+                        double tempAvg = tempAvgStr.toDouble(&ok);
+                        if (ok && tempAvg > -50 && tempAvg < 100) {
+                            currentTemperatureAvg = tempAvg;
+                        }
+                        
+                        // Extraer humedad sensor 1
+                        int hum1Start = tempAvgEnd + 6; // ":HUM1:" tiene 6 caracteres
+                        int hum1End = dataString.indexOf(":HUM2:", hum1Start);
+                        if (hum1End > hum1Start) {
+                            QString hum1Str = dataString.mid(hum1Start, hum1End - hum1Start);
+                            double hum1 = hum1Str.toDouble(&ok);
+                            if (ok && hum1 >= 0 && hum1 <= 100) {
+                                currentHumidity1 = hum1;
+                            }
+                            
+                            // Extraer humedad sensor 2
+                            int hum2Start = hum1End + 6; // ":HUM2:" tiene 6 caracteres
+                            int hum2End = dataString.indexOf(":HUMAVG:", hum2Start);
+                            if (hum2End > hum2Start) {
+                                QString hum2Str = dataString.mid(hum2Start, hum2End - hum2Start);
+                                double hum2 = hum2Str.toDouble(&ok);
+                                if (ok && hum2 >= 0 && hum2 <= 100) {
+                                    currentHumidity2 = hum2;
+                                }
+                                
+                                // Extraer humedad promedio
+                                int humAvgStart = hum2End + 8; // ":HUMAVG:" tiene 8 caracteres
+                                int humAvgEnd = dataString.indexOf(":LIGHT:", humAvgStart);
+                                if (humAvgEnd > humAvgStart) {
+                                    QString humAvgStr = dataString.mid(humAvgStart, humAvgEnd - humAvgStart);
+                                    double humAvg = humAvgStr.toDouble(&ok);
+                                    if (ok && humAvg >= 0 && humAvg <= 100) {
+                                        currentHumidityAvg = humAvg;
+                                    }
+                                    
+                                    // Extraer luz
+                                    int lightStart = humAvgEnd + 7; // ":LIGHT:" tiene 7 caracteres
+                                    QString lightStr = dataString.mid(lightStart);
+                                    double light = lightStr.toDouble(&ok);
+                                    if (ok && light >= 0) {
+                                        currentLight = light;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Actualizar métricas de sensores
+            updateSensorMetrics();
+            
+            ui->statusbar->showMessage(QString("Temp Avg: %1°C, Hum Avg: %2%, Luz: %3")
+                .arg(currentTemperatureAvg, 0, 'f', 1)
+                .arg(currentHumidityAvg, 0, 'f', 1)
+                .arg(currentLight, 0, 'f', 0), 1000);
+            
+            // Actualizar gráfico inmediatamente cuando se reciben nuevos datos
+            updateGraph();
+        }
+        // Formato legacy para compatibilidad (solo un sensor)
+        else if (dataString.startsWith("DATA:TEMP:")) {
+            int tempStart = 10;
             int tempEnd = dataString.indexOf(":HUM:");
             if (tempEnd > tempStart) {
                 QString tempStr = dataString.mid(tempStart, tempEnd - tempStart);
                 bool ok;
                 double temp = tempStr.toDouble(&ok);
-                if (ok && temp > -50 && temp < 100) { // Validar rango razonable
-                    currentTemperature = temp;
+                if (ok && temp > -50 && temp < 100) {
+                    // Asignar a ambos sensores y promedio para compatibilidad
+                    currentTemperature1 = temp;
+                    currentTemperature2 = temp;
+                    currentTemperatureAvg = temp;
                 }
                 
-                // Extraer humedad
-                int humStart = tempEnd + 5; // ":HUM:" tiene 5 caracteres
+                int humStart = tempEnd + 5;
                 int humEnd = dataString.indexOf(":LIGHT:", humStart);
                 if (humEnd > humStart) {
                     QString humStr = dataString.mid(humStart, humEnd - humStart);
                     double hum = humStr.toDouble(&ok);
-                    if (ok && hum >= 0 && hum <= 100) { // Validar rango razonable
-                        currentHumidity = hum;
+                    if (ok && hum >= 0 && hum <= 100) {
+                        currentHumidity1 = hum;
+                        currentHumidity2 = hum;
+                        currentHumidityAvg = hum;
                     }
                     
-                    // Extraer luz
-                    int lightStart = humEnd + 7; // ":LIGHT:" tiene 7 caracteres
+                    int lightStart = humEnd + 7;
                     QString lightStr = dataString.mid(lightStart);
                     double light = lightStr.toDouble(&ok);
                     if (ok && light >= 0) {
                         currentLight = light;
                     }
-                } else {
-                    // Formato sin luz (compatibilidad)
-                    QString humStr = dataString.mid(humStart);
-                    double hum = humStr.toDouble(&ok);
-                    if (ok && hum >= 0 && hum <= 100) {
-                        currentHumidity = hum;
-                    }
                 }
                 
-                // Actualizar métricas de sensores
                 updateSensorMetrics();
-                
-                ui->statusbar->showMessage(QString("Temp: %1°C, Hum: %2%, Luz: %3").arg(currentTemperature, 0, 'f', 1).arg(currentHumidity, 0, 'f', 1).arg(currentLight, 0, 'f', 0), 1000);
-                
-                // Actualizar gráfico inmediatamente cuando se reciben nuevos datos
                 updateGraph();
             }
         }
@@ -418,7 +541,10 @@ void MainWindow::onSerialDataReceived()
             bool ok;
             double value = valueStr.toDouble(&ok);
             if (ok) {
-                currentTemperature = value; // Usar como temperatura por defecto
+                // Asignar a ambos sensores y promedio para compatibilidad
+                currentTemperature1 = value;
+                currentTemperature2 = value;
+                currentTemperatureAvg = value;
             }
         }
     }
@@ -426,21 +552,31 @@ void MainWindow::onSerialDataReceived()
 
 void MainWindow::updateGraph()
 {
-    if (seriesTemperature && seriesHumidity && seriesLight && chart) {
+    if (seriesTemperature1 && seriesTemperature2 && seriesTemperatureAvg && 
+        seriesHumidity1 && seriesHumidity2 && seriesHumidityAvg && 
+        seriesLight && chart) {
         // Calcular tiempo transcurrido en segundos
         qint64 elapsed = startTime.msecsTo(QDateTime::currentDateTime());
         double timeSeconds = elapsed / 1000.0;
 
         // Verificar que los valores sean razonables antes de agregarlos
-        bool validTemp = (currentTemperature > -50 && currentTemperature < 100);
-        bool validHum = (currentHumidity >= 0 && currentHumidity <= 100);
+        bool validTemp1 = (currentTemperature1 > -50 && currentTemperature1 < 100);
+        bool validTemp2 = (currentTemperature2 > -50 && currentTemperature2 < 100);
+        bool validTempAvg = (currentTemperatureAvg > -50 && currentTemperatureAvg < 100);
+        bool validHum1 = (currentHumidity1 >= 0 && currentHumidity1 <= 100);
+        bool validHum2 = (currentHumidity2 >= 0 && currentHumidity2 <= 100);
+        bool validHumAvg = (currentHumidityAvg >= 0 && currentHumidityAvg <= 100);
         bool validLight = (currentLight >= 0);
         
         // Guardar datos para exportación CSV
         GraphDataPoint dataPoint;
         dataPoint.time = timeSeconds;
-        dataPoint.temperature = validTemp ? currentTemperature : 0;
-        dataPoint.humidity = validHum ? currentHumidity : 0;
+        dataPoint.temperature1 = validTemp1 ? currentTemperature1 : 0;
+        dataPoint.temperature2 = validTemp2 ? currentTemperature2 : 0;
+        dataPoint.temperatureAvg = validTempAvg ? currentTemperatureAvg : 0;
+        dataPoint.humidity1 = validHum1 ? currentHumidity1 : 0;
+        dataPoint.humidity2 = validHum2 ? currentHumidity2 : 0;
+        dataPoint.humidityAvg = validHumAvg ? currentHumidityAvg : 0;
         dataPoint.light = validLight ? currentLight : 0;
         graphData.append(dataPoint);
         
@@ -453,12 +589,28 @@ void MainWindow::updateGraph()
         bool addedPoints = false;
         
         // Agregar puntos al gráfico solo si son válidos y están seleccionados
-        if (validTemp && ui->checkBoxTemp->isChecked()) {
-            seriesTemperature->append(timeSeconds, currentTemperature);
+        if (validTemp1 && ui->checkBoxTemp1->isChecked()) {
+            seriesTemperature1->append(timeSeconds, currentTemperature1);
             addedPoints = true;
         }
-        if (validHum && ui->checkBoxHum->isChecked()) {
-            seriesHumidity->append(timeSeconds, currentHumidity);
+        if (validTemp2 && ui->checkBoxTemp2->isChecked()) {
+            seriesTemperature2->append(timeSeconds, currentTemperature2);
+            addedPoints = true;
+        }
+        if (validTempAvg && ui->checkBoxTempAvg->isChecked()) {
+            seriesTemperatureAvg->append(timeSeconds, currentTemperatureAvg);
+            addedPoints = true;
+        }
+        if (validHum1 && ui->checkBoxHum1->isChecked()) {
+            seriesHumidity1->append(timeSeconds, currentHumidity1);
+            addedPoints = true;
+        }
+        if (validHum2 && ui->checkBoxHum2->isChecked()) {
+            seriesHumidity2->append(timeSeconds, currentHumidity2);
+            addedPoints = true;
+        }
+        if (validHumAvg && ui->checkBoxHumAvg->isChecked()) {
+            seriesHumidityAvg->append(timeSeconds, currentHumidityAvg);
             addedPoints = true;
         }
         if (validLight && ui->checkBoxLight->isChecked()) {
@@ -474,11 +626,23 @@ void MainWindow::updateGraph()
         // Limitar número de puntos para mejor rendimiento
         if (pointCount > MAX_POINTS) {
             int removeCount = pointCount - MAX_POINTS;
-            if (seriesTemperature->count() > removeCount) {
-                seriesTemperature->removePoints(0, removeCount);
+            if (seriesTemperature1->count() > removeCount) {
+                seriesTemperature1->removePoints(0, removeCount);
             }
-            if (seriesHumidity->count() > removeCount) {
-                seriesHumidity->removePoints(0, removeCount);
+            if (seriesTemperature2->count() > removeCount) {
+                seriesTemperature2->removePoints(0, removeCount);
+            }
+            if (seriesTemperatureAvg->count() > removeCount) {
+                seriesTemperatureAvg->removePoints(0, removeCount);
+            }
+            if (seriesHumidity1->count() > removeCount) {
+                seriesHumidity1->removePoints(0, removeCount);
+            }
+            if (seriesHumidity2->count() > removeCount) {
+                seriesHumidity2->removePoints(0, removeCount);
+            }
+            if (seriesHumidityAvg->count() > removeCount) {
+                seriesHumidityAvg->removePoints(0, removeCount);
             }
             if (seriesLight->count() > removeCount) {
                 seriesLight->removePoints(0, removeCount);
@@ -498,14 +662,34 @@ void MainWindow::updateGraph()
         double minVal = 0;
         bool hasValidData = false;
         
-        if (validTemp && ui->checkBoxTemp->isChecked()) {
-            maxVal = qMax(maxVal, currentTemperature);
-            minVal = minVal == 0 ? currentTemperature : qMin(minVal, currentTemperature);
+        if (validTemp1 && ui->checkBoxTemp1->isChecked()) {
+            maxVal = qMax(maxVal, currentTemperature1);
+            minVal = minVal == 0 ? currentTemperature1 : qMin(minVal, currentTemperature1);
             hasValidData = true;
         }
-        if (validHum && ui->checkBoxHum->isChecked()) {
-            maxVal = qMax(maxVal, currentHumidity);
-            minVal = minVal == 0 ? currentHumidity : qMin(minVal, currentHumidity);
+        if (validTemp2 && ui->checkBoxTemp2->isChecked()) {
+            maxVal = qMax(maxVal, currentTemperature2);
+            minVal = minVal == 0 ? currentTemperature2 : qMin(minVal, currentTemperature2);
+            hasValidData = true;
+        }
+        if (validTempAvg && ui->checkBoxTempAvg->isChecked()) {
+            maxVal = qMax(maxVal, currentTemperatureAvg);
+            minVal = minVal == 0 ? currentTemperatureAvg : qMin(minVal, currentTemperatureAvg);
+            hasValidData = true;
+        }
+        if (validHum1 && ui->checkBoxHum1->isChecked()) {
+            maxVal = qMax(maxVal, currentHumidity1);
+            minVal = minVal == 0 ? currentHumidity1 : qMin(minVal, currentHumidity1);
+            hasValidData = true;
+        }
+        if (validHum2 && ui->checkBoxHum2->isChecked()) {
+            maxVal = qMax(maxVal, currentHumidity2);
+            minVal = minVal == 0 ? currentHumidity2 : qMin(minVal, currentHumidity2);
+            hasValidData = true;
+        }
+        if (validHumAvg && ui->checkBoxHumAvg->isChecked()) {
+            maxVal = qMax(maxVal, currentHumidityAvg);
+            minVal = minVal == 0 ? currentHumidityAvg : qMin(minVal, currentHumidityAvg);
             hasValidData = true;
         }
         if (validLight && ui->checkBoxLight->isChecked()) {
@@ -537,12 +721,16 @@ void MainWindow::updateGraph()
 void MainWindow::sendCommand(const QString &command)
 {
     if (serialPort && serialPort->isOpen()) {
-        QByteArray data = (command + "\n").toUtf8();
+        // Limpiar el comando de espacios y caracteres especiales
+        QString cleanCommand = command.trimmed();
+        
+        // Asegurar que el comando termine con \n
+        QByteArray data = (cleanCommand + "\n").toUtf8();
         serialPort->write(data);
         serialPort->flush();
         
         // Mostrar comando enviado en la consola
-        appendToConsole(command, "TX");
+        appendToConsole(QString("TX: [%1]").arg(cleanCommand), "TX");
     } else {
         QString errorMsg = "No hay conexión serial activa.";
         QMessageBox::warning(this, "Advertencia", errorMsg);
@@ -552,14 +740,26 @@ void MainWindow::sendCommand(const QString &command)
 
 void MainWindow::onMotorSliderChanged(int motor, int value)
 {
+    // Construir comando de forma explícita para evitar problemas
     QString command = QString("SET_MOTOR%1:%2").arg(motor).arg(value);
+    // Verificar que el comando se construyó correctamente
+    if (!command.startsWith("SET_MOTOR")) {
+        appendToConsole(QString("ERROR: Comando mal formado: %1").arg(command), "ERROR");
+        return;
+    }
     sendCommand(command);
     ui->statusbar->showMessage(QString("Motor %1 establecido a %2").arg(motor).arg(value), 1000);
 }
 
 void MainWindow::onMotorSpinBoxChanged(int motor, int value)
 {
+    // Construir comando de forma explícita para evitar problemas
     QString command = QString("SET_MOTOR%1:%2").arg(motor).arg(value);
+    // Verificar que el comando se construyó correctamente
+    if (!command.startsWith("SET_MOTOR")) {
+        appendToConsole(QString("ERROR: Comando mal formado: %1").arg(command), "ERROR");
+        return;
+    }
     sendCommand(command);
     ui->statusbar->showMessage(QString("Motor %1 establecido a %2").arg(motor).arg(value), 1000);
 }
@@ -610,8 +810,12 @@ void MainWindow::onClearConsole()
 void MainWindow::updateSensorMetrics()
 {
     // Actualizar etiquetas de sensores en la pestaña de Control
-    ui->labelTempValue->setText(QString("%1 °C").arg(currentTemperature, 0, 'f', 1));
-    ui->labelHumValue->setText(QString("%1 %").arg(currentHumidity, 0, 'f', 1));
+    ui->labelTemp1Value->setText(QString("%1 °C").arg(currentTemperature1, 0, 'f', 1));
+    ui->labelTemp2Value->setText(QString("%1 °C").arg(currentTemperature2, 0, 'f', 1));
+    ui->labelTempAvgValue->setText(QString("%1 °C").arg(currentTemperatureAvg, 0, 'f', 1));
+    ui->labelHum1Value->setText(QString("%1 %").arg(currentHumidity1, 0, 'f', 1));
+    ui->labelHum2Value->setText(QString("%1 %").arg(currentHumidity2, 0, 'f', 1));
+    ui->labelHumAvgValue->setText(QString("%1 %").arg(currentHumidityAvg, 0, 'f', 1));
     ui->labelLightValue->setText(QString("%1").arg(currentLight, 0, 'f', 0));
 }
 
@@ -664,11 +868,16 @@ void MainWindow::onDisablePID()
 
 void MainWindow::onVariableCheckboxChanged()
 {
-    if (!seriesTemperature || !seriesHumidity || !seriesLight) return;
+    if (!seriesTemperature1 || !seriesTemperature2 || !seriesTemperatureAvg || 
+        !seriesHumidity1 || !seriesHumidity2 || !seriesHumidityAvg || !seriesLight) return;
     
     // Mostrar/ocultar series según checkboxes seleccionados
-    seriesTemperature->setVisible(ui->checkBoxTemp->isChecked());
-    seriesHumidity->setVisible(ui->checkBoxHum->isChecked());
+    seriesTemperature1->setVisible(ui->checkBoxTemp1->isChecked());
+    seriesTemperature2->setVisible(ui->checkBoxTemp2->isChecked());
+    seriesTemperatureAvg->setVisible(ui->checkBoxTempAvg->isChecked());
+    seriesHumidity1->setVisible(ui->checkBoxHum1->isChecked());
+    seriesHumidity2->setVisible(ui->checkBoxHum2->isChecked());
+    seriesHumidityAvg->setVisible(ui->checkBoxHumAvg->isChecked());
     seriesLight->setVisible(ui->checkBoxLight->isChecked());
     
     // Actualizar gráfico visualmente
@@ -685,7 +894,10 @@ void MainWindow::onExportCSV()
     }
     
     // Verificar que al menos una variable esté seleccionada
-    if (!ui->checkBoxTemp->isChecked() && !ui->checkBoxHum->isChecked() && !ui->checkBoxLight->isChecked()) {
+    if (!ui->checkBoxTemp1->isChecked() && !ui->checkBoxTemp2->isChecked() && 
+        !ui->checkBoxTempAvg->isChecked() && !ui->checkBoxHum1->isChecked() && 
+        !ui->checkBoxHum2->isChecked() && !ui->checkBoxHumAvg->isChecked() && 
+        !ui->checkBoxLight->isChecked()) {
         QMessageBox::warning(this, "Exportar CSV", "Por favor seleccione al menos una variable para exportar.");
         return;
     }
@@ -717,11 +929,23 @@ void MainWindow::onExportCSV()
     QStringList headers;
     headers << "Tiempo (s)";
     
-    if (ui->checkBoxTemp->isChecked()) {
-        headers << "Temperatura (°C)";
+    if (ui->checkBoxTemp1->isChecked()) {
+        headers << "Temperatura DHT22 #1 (°C)";
     }
-    if (ui->checkBoxHum->isChecked()) {
-        headers << "Humedad (%)";
+    if (ui->checkBoxTemp2->isChecked()) {
+        headers << "Temperatura DHT22 #2 (°C)";
+    }
+    if (ui->checkBoxTempAvg->isChecked()) {
+        headers << "Temperatura Promedio (°C)";
+    }
+    if (ui->checkBoxHum1->isChecked()) {
+        headers << "Humedad DHT22 #1 (%)";
+    }
+    if (ui->checkBoxHum2->isChecked()) {
+        headers << "Humedad DHT22 #2 (%)";
+    }
+    if (ui->checkBoxHumAvg->isChecked()) {
+        headers << "Humedad Promedio (%)";
     }
     if (ui->checkBoxLight->isChecked()) {
         headers << "Luz";
@@ -734,11 +958,23 @@ void MainWindow::onExportCSV()
         QStringList row;
         row << QString::number(point.time, 'f', 2);
         
-        if (ui->checkBoxTemp->isChecked()) {
-            row << QString::number(point.temperature, 'f', 2);
+        if (ui->checkBoxTemp1->isChecked()) {
+            row << QString::number(point.temperature1, 'f', 2);
         }
-        if (ui->checkBoxHum->isChecked()) {
-            row << QString::number(point.humidity, 'f', 2);
+        if (ui->checkBoxTemp2->isChecked()) {
+            row << QString::number(point.temperature2, 'f', 2);
+        }
+        if (ui->checkBoxTempAvg->isChecked()) {
+            row << QString::number(point.temperatureAvg, 'f', 2);
+        }
+        if (ui->checkBoxHum1->isChecked()) {
+            row << QString::number(point.humidity1, 'f', 2);
+        }
+        if (ui->checkBoxHum2->isChecked()) {
+            row << QString::number(point.humidity2, 'f', 2);
+        }
+        if (ui->checkBoxHumAvg->isChecked()) {
+            row << QString::number(point.humidityAvg, 'f', 2);
         }
         if (ui->checkBoxLight->isChecked()) {
             row << QString::number(point.light, 'f', 0);

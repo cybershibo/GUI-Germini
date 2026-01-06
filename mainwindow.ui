@@ -98,7 +98,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab1">
        <attribute name="title">
@@ -107,14 +107,14 @@
        <layout class="QVBoxLayout" name="verticalLayout_tab1">
         <item>
          <widget class="QLabel" name="labelConfigTitle">
-          <property name="text">
-           <string>Configuración del Microcontrolador</string>
-          </property>
           <property name="font">
            <font>
             <pointsize>14</pointsize>
             <bold>true</bold>
            </font>
+          </property>
+          <property name="text">
+           <string>Configuración del Microcontrolador</string>
           </property>
          </widget>
         </item>
@@ -208,76 +208,156 @@
        <layout class="QVBoxLayout" name="verticalLayout_tab2">
         <item>
          <widget class="QLabel" name="labelSensors">
-          <property name="text">
-           <string>Métricas de Sensores:</string>
-          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>
             <bold>true</bold>
            </font>
           </property>
+          <property name="text">
+           <string>Métricas de Sensores:</string>
+          </property>
          </widget>
         </item>
         <item>
          <layout class="QGridLayout" name="gridLayout_sensors">
           <item row="0" column="0">
-           <widget class="QLabel" name="labelTemp">
+           <widget class="QLabel" name="labelTemp1">
             <property name="text">
-             <string>Temperatura:</string>
+             <string>Temperatura DHT22 #1:</string>
             </property>
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QLabel" name="labelTempValue">
-            <property name="text">
-             <string>-- °C</string>
-            </property>
+           <widget class="QLabel" name="labelTemp1Value">
             <property name="font">
              <font>
-              <pointsize>14</pointsize>
+              <pointsize>12</pointsize>
               <bold>true</bold>
              </font>
+            </property>
+            <property name="text">
+             <string>-- °C</string>
             </property>
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="labelHum">
+           <widget class="QLabel" name="labelTemp2">
             <property name="text">
-             <string>Humedad:</string>
+             <string>Temperatura DHT22 #2:</string>
             </property>
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLabel" name="labelHumValue">
-            <property name="text">
-             <string>-- %</string>
+           <widget class="QLabel" name="labelTemp2Value">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
             </property>
+            <property name="text">
+             <string>-- °C</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="labelTempAvg">
+            <property name="text">
+             <string>Temperatura Promedio:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="labelTempAvgValue">
             <property name="font">
              <font>
               <pointsize>14</pointsize>
               <bold>true</bold>
              </font>
             </property>
+            <property name="text">
+             <string>-- °C</string>
+            </property>
            </widget>
           </item>
-          <item row="2" column="0">
+          <item row="3" column="0">
+           <widget class="QLabel" name="labelHum1">
+            <property name="text">
+             <string>Humedad DHT22 #1:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLabel" name="labelHum1Value">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>-- %</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="labelHum2">
+            <property name="text">
+             <string>Humedad DHT22 #2:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLabel" name="labelHum2Value">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>-- %</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="labelHumAvg">
+            <property name="text">
+             <string>Humedad Promedio:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLabel" name="labelHumAvgValue">
+            <property name="font">
+             <font>
+              <pointsize>14</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>-- %</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
            <widget class="QLabel" name="labelLight">
             <property name="text">
              <string>Luz:</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="1">
+          <item row="6" column="1">
            <widget class="QLabel" name="labelLightValue">
-            <property name="text">
-             <string>--</string>
-            </property>
             <property name="font">
              <font>
               <pointsize>14</pointsize>
               <bold>true</bold>
              </font>
+            </property>
+            <property name="text">
+             <string>--</string>
             </property>
            </widget>
           </item>
@@ -285,14 +365,14 @@
         </item>
         <item>
          <widget class="QLabel" name="labelMotorsControl">
-          <property name="text">
-           <string>Control de Motores:</string>
-          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>
             <bold>true</bold>
            </font>
+          </property>
+          <property name="text">
+           <string>Control de Motores:</string>
           </property>
          </widget>
         </item>
@@ -301,14 +381,14 @@
           <item row="0" column="0">
            <widget class="QPushButton" name="btn1_1">
             <property name="text">
-             <string>Iniciar/Detener Motores (Auto)</string>
+             <string>Arrancar Actuadores</string>
             </property>
            </widget>
           </item>
           <item row="0" column="1">
            <widget class="QPushButton" name="btn1_2">
             <property name="text">
-             <string>Control Manual</string>
+             <string>Parar actuadores</string>
             </property>
            </widget>
           </item>
@@ -340,7 +420,7 @@
           <item row="0" column="0">
            <widget class="QLabel" name="labelMotor1">
             <property name="text">
-             <string>Motor 1 (Pin 4):</string>
+             <string> Peltier (Pin 4):</string>
             </property>
            </widget>
           </item>
@@ -373,7 +453,7 @@
           <item row="1" column="0">
            <widget class="QLabel" name="labelMotor2">
             <property name="text">
-             <string>Motor 2 (Pin 16):</string>
+             <string>Abanico Frio (Pin 16):</string>
             </property>
            </widget>
           </item>
@@ -406,7 +486,7 @@
           <item row="2" column="0">
            <widget class="QLabel" name="labelMotor3">
             <property name="text">
-             <string>Motor 3 (Pin 17):</string>
+             <string>Abanico Caliente(Pin 17):</string>
             </property>
            </widget>
           </item>
@@ -460,14 +540,14 @@
        <layout class="QVBoxLayout" name="verticalLayout_tab3">
         <item>
          <widget class="QLabel" name="labelPIDTitle">
-          <property name="text">
-           <string>Controlador PID de Temperatura</string>
-          </property>
           <property name="font">
            <font>
             <pointsize>14</pointsize>
             <bold>true</bold>
            </font>
+          </property>
+          <property name="text">
+           <string>Controlador PID de Temperatura</string>
           </property>
          </widget>
         </item>
@@ -482,6 +562,9 @@
           </item>
           <item row="0" column="1">
            <widget class="QDoubleSpinBox" name="spinBoxSetpoint">
+            <property name="suffix">
+             <string> °C</string>
+            </property>
             <property name="decimals">
              <number>1</number>
             </property>
@@ -493,9 +576,6 @@
             </property>
             <property name="value">
              <double>25.000000000000000</double>
-            </property>
-            <property name="suffix">
-             <string> °C</string>
             </property>
            </widget>
           </item>
@@ -614,25 +694,25 @@
         </item>
         <item>
          <widget class="QLabel" name="labelPIDStatus">
-          <property name="text">
-           <string>Estado del PID: Desactivado</string>
-          </property>
           <property name="font">
            <font>
             <pointsize>10</pointsize>
            </font>
+          </property>
+          <property name="text">
+           <string>Estado del PID: Desactivado</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="labelPIDOutput">
-          <property name="text">
-           <string>Salida PID: --</string>
-          </property>
           <property name="font">
            <font>
             <pointsize>10</pointsize>
            </font>
+          </property>
+          <property name="text">
+           <string>Salida PID: --</string>
           </property>
          </widget>
         </item>
@@ -666,9 +746,29 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="checkBoxTemp">
+           <widget class="QCheckBox" name="checkBoxTemp1">
             <property name="text">
-             <string>Temperatura</string>
+             <string>Temp #1</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxTemp2">
+            <property name="text">
+             <string>Temp #2</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxTempAvg">
+            <property name="text">
+             <string>Temp Promedio</string>
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -676,9 +776,29 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="checkBoxHum">
+           <widget class="QCheckBox" name="checkBoxHum1">
             <property name="text">
-             <string>Humedad</string>
+             <string>Hum #1</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxHum2">
+            <property name="text">
+             <string>Hum #2</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxHumAvg">
+            <property name="text">
+             <string>Hum Promedio</string>
             </property>
             <property name="checked">
              <bool>true</bool>

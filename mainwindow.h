@@ -43,18 +43,26 @@ private:
     QSerialPort *serialPort;
     QChart *chart;
     QChartView *chartView;
-    QLineSeries *seriesTemperature;
-    QLineSeries *seriesHumidity;
+    QLineSeries *seriesTemperature1;
+    QLineSeries *seriesTemperature2;
+    QLineSeries *seriesTemperatureAvg;
+    QLineSeries *seriesHumidity1;
+    QLineSeries *seriesHumidity2;
+    QLineSeries *seriesHumidityAvg;
     QLineSeries *seriesLight;
     QValueAxis *axisX;
     QValueAxis *axisY;
     QTimer *graphTimer;
     QDateTime startTime;
-    double currentTemperature;
-    double currentHumidity;
+    double currentTemperature1;
+    double currentTemperature2;
+    double currentTemperatureAvg;
+    double currentHumidity1;
+    double currentHumidity2;
+    double currentHumidityAvg;
     double currentLight;
     int pointCount;
-    static const int MAX_POINTS = 10000;
+    static const int MAX_POINTS = 100000000;
     
     // Buffer para datos seriales (pueden llegar fragmentados)
     QString serialBuffer;
@@ -85,8 +93,12 @@ private:
     // Estructura para almacenar datos del gráfico
     struct GraphDataPoint {
         double time;
-        double temperature;
-        double humidity;
+        double temperature1;
+        double temperature2;
+        double temperatureAvg;
+        double humidity1;
+        double humidity2;
+        double humidityAvg;
         double light;
     };
     QList<GraphDataPoint> graphData;
