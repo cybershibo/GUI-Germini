@@ -434,6 +434,43 @@ void MainWindow::onSerialDataReceived()
         // Mostrar en consola todos los datos recibidos
         appendToConsole(dataString, "RX");
         
+        // Detectar errores de lectura de sensores
+        if (dataString.contains("Error leyendo DHT22 #1", Qt::CaseInsensitive)) {
+            // Error en sensor 1: establecer valores en 0
+            currentTemperature1 = 0.0;
+            currentHumidity1 = 0.0;
+            // Si ambos sensores fallan, el promedio también es 0
+            if (currentTemperature2 == 0.0 && currentHumidity2 == 0.0) {
+                currentTemperatureAvg = 0.0;
+                currentHumidityAvg = 0.0;
+            } else {
+                // Si solo el sensor 1 falla, usar el sensor 2 como promedio
+                currentTemperatureAvg = currentTemperature2;
+                currentHumidityAvg = currentHumidity2;
+            }
+            updateSensorMetrics();
+            updateGraph();
+            continue;
+        }
+        
+        if (dataString.contains("Error leyendo DHT22 #2", Qt::CaseInsensitive)) {
+            // Error en sensor 2: establecer valores en 0
+            currentTemperature2 = 0.0;
+            currentHumidity2 = 0.0;
+            // Si ambos sensores fallan, el promedio también es 0
+            if (currentTemperature1 == 0.0 && currentHumidity1 == 0.0) {
+                currentTemperatureAvg = 0.0;
+                currentHumidityAvg = 0.0;
+            } else {
+                // Si solo el sensor 2 falla, usar el sensor 1 como promedio
+                currentTemperatureAvg = currentTemperature1;
+                currentHumidityAvg = currentHumidity1;
+            }
+            updateSensorMetrics();
+            updateGraph();
+            continue;
+        }
+        
         // Procesar datos recibidos de ambos DHT22 y sensor de luz
         // Formato esperado: "DATA:TEMP1:XX.XX:TEMP2:XX.XX:TEMPAVG:XX.XX:HUM1:XX.XX:HUM2:XX.XX:HUMAVG:XX.XX:LIGHT:XXX"
         if (dataString.startsWith("DATA:TEMP1:")) {
@@ -444,8 +481,11 @@ void MainWindow::onSerialDataReceived()
             if (temp1End > temp1Start) {
                 QString temp1Str = dataString.mid(temp1Start, temp1End - temp1Start);
                 double temp1 = temp1Str.toDouble(&ok);
-                if (ok && temp1 > -50 && temp1 < 100) {
+                if (ok && temp1 > -50 && temp1 < 100 && !temp1Str.contains("nan", Qt::CaseInsensitive)) {
                     currentTemperature1 = temp1;
+                } else {
+                    // Error: establecer en 0
+                    currentTemperature1 = 0.0;
                 }
                 
                 // Extraer temperatura sensor 2
@@ -454,8 +494,11 @@ void MainWindow::onSerialDataReceived()
                 if (temp2End > temp2Start) {
                     QString temp2Str = dataString.mid(temp2Start, temp2End - temp2Start);
                     double temp2 = temp2Str.toDouble(&ok);
-                    if (ok && temp2 > -50 && temp2 < 100) {
+                    if (ok && temp2 > -50 && temp2 < 100 && !temp2Str.contains("nan", Qt::CaseInsensitive)) {
                         currentTemperature2 = temp2;
+                    } else {
+                        // Error: establecer en 0
+                        currentTemperature2 = 0.0;
                     }
                     
                     // Extraer temperatura promedio
@@ -464,8 +507,11 @@ void MainWindow::onSerialDataReceived()
                     if (tempAvgEnd > tempAvgStart) {
                         QString tempAvgStr = dataString.mid(tempAvgStart, tempAvgEnd - tempAvgStart);
                         double tempAvg = tempAvgStr.toDouble(&ok);
-                        if (ok && tempAvg > -50 && tempAvg < 100) {
+                        if (ok && tempAvg > -50 && tempAvg < 100 && !tempAvgStr.contains("nan", Qt::CaseInsensitive)) {
                             currentTemperatureAvg = tempAvg;
+                        } else {
+                            // Error: establecer en 0
+                            currentTemperatureAvg = 0.0;
                         }
                         
                         // Extraer humedad sensor 1
@@ -474,8 +520,11 @@ void MainWindow::onSerialDataReceived()
                         if (hum1End > hum1Start) {
                             QString hum1Str = dataString.mid(hum1Start, hum1End - hum1Start);
                             double hum1 = hum1Str.toDouble(&ok);
-                            if (ok && hum1 >= 0 && hum1 <= 100) {
+                            if (ok && hum1 >= 0 && hum1 <= 100 && !hum1Str.contains("nan", Qt::CaseInsensitive)) {
                                 currentHumidity1 = hum1;
+                            } else {
+                                // Error: establecer en 0
+                                currentHumidity1 = 0.0;
                             }
                             
                             // Extraer humedad sensor 2
@@ -484,8 +533,11 @@ void MainWindow::onSerialDataReceived()
                             if (hum2End > hum2Start) {
                                 QString hum2Str = dataString.mid(hum2Start, hum2End - hum2Start);
                                 double hum2 = hum2Str.toDouble(&ok);
-                                if (ok && hum2 >= 0 && hum2 <= 100) {
+                                if (ok && hum2 >= 0 && hum2 <= 100 && !hum2Str.contains("nan", Qt::CaseInsensitive)) {
                                     currentHumidity2 = hum2;
+                                } else {
+                                    // Error: establecer en 0
+                                    currentHumidity2 = 0.0;
                                 }
                                 
                                 // Extraer humedad promedio
@@ -494,8 +546,11 @@ void MainWindow::onSerialDataReceived()
                                 if (humAvgEnd > humAvgStart) {
                                     QString humAvgStr = dataString.mid(humAvgStart, humAvgEnd - humAvgStart);
                                     double humAvg = humAvgStr.toDouble(&ok);
-                                    if (ok && humAvg >= 0 && humAvg <= 100) {
+                                    if (ok && humAvg >= 0 && humAvg <= 100 && !humAvgStr.contains("nan", Qt::CaseInsensitive)) {
                                         currentHumidityAvg = humAvg;
+                                    } else {
+                                        // Error: establecer en 0
+                                        currentHumidityAvg = 0.0;
                                     }
                                     
                                     // Extraer luz
@@ -510,6 +565,36 @@ void MainWindow::onSerialDataReceived()
                         }
                     }
                 }
+            }
+            
+            // Recalcular promedios basándose en valores válidos
+            // Si ambos sensores tienen valores válidos (dentro del rango esperado), calcular promedio
+            bool temp1Valid = (currentTemperature1 >= -50.0 && currentTemperature1 <= 100.0);
+            bool temp2Valid = (currentTemperature2 >= -50.0 && currentTemperature2 <= 100.0);
+            
+            if (temp1Valid && temp2Valid) {
+                currentTemperatureAvg = (currentTemperature1 + currentTemperature2) / 2.0;
+            } else if (temp1Valid) {
+                currentTemperatureAvg = currentTemperature1;
+            } else if (temp2Valid) {
+                currentTemperatureAvg = currentTemperature2;
+            } else {
+                // Ambos sensores fallaron o tienen valores inválidos
+                currentTemperatureAvg = 0.0;
+            }
+            
+            bool hum1Valid = (currentHumidity1 >= 0.0 && currentHumidity1 <= 100.0);
+            bool hum2Valid = (currentHumidity2 >= 0.0 && currentHumidity2 <= 100.0);
+            
+            if (hum1Valid && hum2Valid) {
+                currentHumidityAvg = (currentHumidity1 + currentHumidity2) / 2.0;
+            } else if (hum1Valid) {
+                currentHumidityAvg = currentHumidity1;
+            } else if (hum2Valid) {
+                currentHumidityAvg = currentHumidity2;
+            } else {
+                // Ambos sensores fallaron o tienen valores inválidos
+                currentHumidityAvg = 0.0;
             }
             
             // Actualizar métricas de sensores
@@ -531,11 +616,16 @@ void MainWindow::onSerialDataReceived()
                 QString tempStr = dataString.mid(tempStart, tempEnd - tempStart);
                 bool ok;
                 double temp = tempStr.toDouble(&ok);
-                if (ok && temp > -50 && temp < 100) {
+                if (ok && temp > -50 && temp < 100 && !tempStr.contains("nan", Qt::CaseInsensitive)) {
                     // Asignar a ambos sensores y promedio para compatibilidad
                     currentTemperature1 = temp;
                     currentTemperature2 = temp;
                     currentTemperatureAvg = temp;
+                } else {
+                    // Error: establecer en 0
+                    currentTemperature1 = 0.0;
+                    currentTemperature2 = 0.0;
+                    currentTemperatureAvg = 0.0;
                 }
                 
                 int humStart = tempEnd + 5;
@@ -543,10 +633,15 @@ void MainWindow::onSerialDataReceived()
                 if (humEnd > humStart) {
                     QString humStr = dataString.mid(humStart, humEnd - humStart);
                     double hum = humStr.toDouble(&ok);
-                    if (ok && hum >= 0 && hum <= 100) {
+                    if (ok && hum >= 0 && hum <= 100 && !humStr.contains("nan", Qt::CaseInsensitive)) {
                         currentHumidity1 = hum;
                         currentHumidity2 = hum;
                         currentHumidityAvg = hum;
+                    } else {
+                        // Error: establecer en 0
+                        currentHumidity1 = 0.0;
+                        currentHumidity2 = 0.0;
+                        currentHumidityAvg = 0.0;
                     }
                     
                     int lightStart = humEnd + 7;
