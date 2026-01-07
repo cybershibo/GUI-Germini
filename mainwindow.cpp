@@ -39,6 +39,9 @@ MainWindow::MainWindow(QWidget *parent)
     , currentLight(0.0)
     , pointCount(0)
     , serialBuffer("")
+    , currentPWM1(0)
+    , currentPWM2(0)
+    , currentPWM3(0)
 {
     ui->setupUi(this);
 
@@ -121,6 +124,9 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Deshabilitar todas las pestañas excepto Configuración al inicio
     setTabsEnabled(false);
+    
+    // Inicializar etiquetas PWM
+    updatePWMLabels();
 }
 
 MainWindow::~MainWindow()
@@ -224,39 +230,56 @@ void MainWindow::setupChart()
 
 void MainWindow::connectAllButtons()
 {
-    // Tab 2 (Control) - Los botones btn1_1, btn1_2, btn1_3, btn1_4 están ahora en la pestaña de Control
-    connect(ui->btn1_1, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-    connect(ui->btn1_2, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-    connect(ui->btn1_3, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-    connect(ui->btn1_4, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
-    
-    // Nota: Los botones btn2_x y btn3_x fueron eliminados al reorganizar las pestañas
-    // La pestaña 1 ahora es Configuración (sin botones)
-    // La pestaña 2 es Control (con btn1_x)
-    // La pestaña 3 es PID (con controles propios conectados en el constructor)
+    // Tab 2 (Control) - Botones para iniciar/apagar todos los actuadores
+    connect(ui->btn1_1, &QPushButton::clicked, this, &MainWindow::onStartAllActuators);
+    connect(ui->btn1_2, &QPushButton::clicked, this, &MainWindow::onStopAllActuators);
 }
 
-void MainWindow::onButtonClicked()
+void MainWindow::onStartAllActuators()
 {
-    QPushButton *button = qobject_cast<QPushButton*>(sender());
-    if (!button) return;
+    // Iniciar todos los actuadores con los valores actuales de los sliders
+    int pwm1 = ui->sliderMotor1->value();
+    int pwm2 = ui->sliderMotor2->value();
+    int pwm3 = ui->sliderMotor3->value();
+    
+    // Enviar comandos para establecer todos los motores
+    sendCommand(QString("SET_MOTOR1:%1").arg(pwm1));
+    sendCommand(QString("SET_MOTOR2:%1").arg(pwm2));
+    sendCommand(QString("SET_MOTOR3:%1").arg(pwm3));
+    
+    // Actualizar valores PWM actuales
+    currentPWM1 = pwm1;
+    currentPWM2 = pwm2;
+    currentPWM3 = pwm3;
+    updatePWMLabels();
+    
+    ui->statusbar->showMessage("Todos los actuadores iniciados", 2000);
+    appendToConsole(QString("Iniciando todos los actuadores: M1=%1, M2=%2, M3=%3").arg(pwm1).arg(pwm2).arg(pwm3), "INFO");
+}
 
-    QString buttonName = button->objectName();
-    QString command;
-
-    // Generar comando basado en el botón presionado
-    if (buttonName.startsWith("btn1_")) {
-        command = "CMD1_" + buttonName.right(1);
-    } else if (buttonName.startsWith("btn2_")) {
-        command = "CMD2_" + buttonName.right(1);
-    } else if (buttonName.startsWith("btn3_")) {
-        command = "CMD3_" + buttonName.right(1);
-    } else if (buttonName.startsWith("btn4_")) {
-        command = "CMD4_" + buttonName.right(1);
-    }
-
-    sendCommand(command);
-    ui->statusbar->showMessage("Comando enviado: " + command, 2000);
+void MainWindow::onStopAllActuators()
+{
+    // Apagar todos los actuadores (PWM = 0)
+    sendCommand("SET_MOTOR1:0");
+    sendCommand("SET_MOTOR2:0");
+    sendCommand("SET_MOTOR3:0");
+    
+    // Actualizar sliders y spinboxes a 0
+    ui->sliderMotor1->setValue(0);
+    ui->sliderMotor2->setValue(0);
+    ui->sliderMotor3->setValue(0);
+    ui->spinBoxMotor1->setValue(0);
+    ui->spinBoxMotor2->setValue(0);
+    ui->spinBoxMotor3->setValue(0);
+    
+    // Actualizar valores PWM actuales
+    currentPWM1 = 0;
+    currentPWM2 = 0;
+    currentPWM3 = 0;
+    updatePWMLabels();
+    
+    ui->statusbar->showMessage("Todos los actuadores apagados", 2000);
+    appendToConsole("Todos los actuadores apagados", "INFO");
 }
 
 void MainWindow::onConnectClicked()
@@ -656,6 +679,99 @@ void MainWindow::onSerialDataReceived()
                 updateGraph();
             }
         }
+        // Procesar mensajes de estado de motores
+        // Formato 1: "MOTOR1:XXX MOTOR2:XXX MOTOR3:XXX" (modo automático)
+        // Formato 2: "Motor X establecido a: XXX" (confirmación de comando SET_MOTOR)
+        else if (dataString.contains("MOTOR") || dataString.contains("Motor")) {
+            bool updated = false;
+            
+            // Parsear formato "MOTOR1:XXX MOTOR2:XXX MOTOR3:XXX"
+            QRegularExpression motorRegex("MOTOR(\\d+):(\\d+)");
+            QRegularExpressionMatchIterator matches = motorRegex.globalMatch(dataString);
+            
+            while (matches.hasNext()) {
+                QRegularExpressionMatch match = matches.next();
+                int motorNum = match.captured(1).toInt();
+                int pwmValue = match.captured(2).toInt();
+                
+                if (motorNum >= 1 && motorNum <= 3 && pwmValue >= 0 && pwmValue <= 255) {
+                    switch(motorNum) {
+                        case 1:
+                            currentPWM1 = pwmValue;
+                            updated = true;
+                            break;
+                        case 2:
+                            currentPWM2 = pwmValue;
+                            updated = true;
+                            break;
+                        case 3:
+                            currentPWM3 = pwmValue;
+                            updated = true;
+                            break;
+                    }
+                }
+            }
+            
+            // Parsear formato "Motor X establecido a: XXX"
+            QRegularExpression motorEstRegex("Motor (\\d+) establecido a: (\\d+)");
+            QRegularExpressionMatch match = motorEstRegex.match(dataString);
+            if (match.hasMatch()) {
+                int motorNum = match.captured(1).toInt();
+                int pwmValue = match.captured(2).toInt();
+                
+                if (motorNum >= 1 && motorNum <= 3 && pwmValue >= 0 && pwmValue <= 255) {
+                    switch(motorNum) {
+                        case 1:
+                            currentPWM1 = pwmValue;
+                            updated = true;
+                            break;
+                        case 2:
+                            currentPWM2 = pwmValue;
+                            updated = true;
+                            break;
+                        case 3:
+                            currentPWM3 = pwmValue;
+                            updated = true;
+                            break;
+                    }
+                }
+            }
+            
+            if (updated) {
+                updatePWMLabels();
+                // Sincronizar sliders y spinboxes con los valores actuales
+                if (currentPWM1 != ui->sliderMotor1->value()) {
+                    ui->sliderMotor1->blockSignals(true);
+                    ui->sliderMotor1->setValue(currentPWM1);
+                    ui->sliderMotor1->blockSignals(false);
+                }
+                if (currentPWM1 != ui->spinBoxMotor1->value()) {
+                    ui->spinBoxMotor1->blockSignals(true);
+                    ui->spinBoxMotor1->setValue(currentPWM1);
+                    ui->spinBoxMotor1->blockSignals(false);
+                }
+                if (currentPWM2 != ui->sliderMotor2->value()) {
+                    ui->sliderMotor2->blockSignals(true);
+                    ui->sliderMotor2->setValue(currentPWM2);
+                    ui->sliderMotor2->blockSignals(false);
+                }
+                if (currentPWM2 != ui->spinBoxMotor2->value()) {
+                    ui->spinBoxMotor2->blockSignals(true);
+                    ui->spinBoxMotor2->setValue(currentPWM2);
+                    ui->spinBoxMotor2->blockSignals(false);
+                }
+                if (currentPWM3 != ui->sliderMotor3->value()) {
+                    ui->sliderMotor3->blockSignals(true);
+                    ui->sliderMotor3->setValue(currentPWM3);
+                    ui->sliderMotor3->blockSignals(false);
+                }
+                if (currentPWM3 != ui->spinBoxMotor3->value()) {
+                    ui->spinBoxMotor3->blockSignals(true);
+                    ui->spinBoxMotor3->setValue(currentPWM3);
+                    ui->spinBoxMotor3->blockSignals(false);
+                }
+            }
+        }
         // Procesar salida del PID
         else if (dataString.startsWith("PID_OUTPUT:")) {
             int outputStart = 11; // "PID_OUTPUT:" tiene 11 caracteres
@@ -890,6 +1006,21 @@ void MainWindow::onMotorSliderChanged(int motor, int value)
         return;
     }
     sendCommand(command);
+    
+    // Actualizar valor PWM actual
+    switch(motor) {
+        case 1:
+            currentPWM1 = value;
+            break;
+        case 2:
+            currentPWM2 = value;
+            break;
+        case 3:
+            currentPWM3 = value;
+            break;
+    }
+    updatePWMLabels();
+    
     ui->statusbar->showMessage(QString("Motor %1 establecido a %2").arg(motor).arg(value), 1000);
 }
 
@@ -903,7 +1034,35 @@ void MainWindow::onMotorSpinBoxChanged(int motor, int value)
         return;
     }
     sendCommand(command);
+    
+    // Actualizar valor PWM actual
+    switch(motor) {
+        case 1:
+            currentPWM1 = value;
+            break;
+        case 2:
+            currentPWM2 = value;
+            break;
+        case 3:
+            currentPWM3 = value;
+            break;
+    }
+    updatePWMLabels();
+    
     ui->statusbar->showMessage(QString("Motor %1 establecido a %2").arg(motor).arg(value), 1000);
+}
+
+void MainWindow::updatePWMLabels()
+{
+    if (ui->labelPWM1) {
+        ui->labelPWM1->setText(QString("PWM: %1").arg(currentPWM1));
+    }
+    if (ui->labelPWM2) {
+        ui->labelPWM2->setText(QString("PWM: %1").arg(currentPWM2));
+    }
+    if (ui->labelPWM3) {
+        ui->labelPWM3->setText(QString("PWM: %1").arg(currentPWM3));
+    }
 }
 
 void MainWindow::appendToConsole(const QString &message, const QString &type)

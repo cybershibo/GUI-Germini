@@ -381,28 +381,14 @@
           <item row="0" column="0">
            <widget class="QPushButton" name="btn1_1">
             <property name="text">
-             <string>Arrancar Actuadores</string>
+             <string>Iniciar Todos los Actuadores</string>
             </property>
            </widget>
           </item>
           <item row="0" column="1">
            <widget class="QPushButton" name="btn1_2">
             <property name="text">
-             <string>Parar actuadores</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QPushButton" name="btn1_3">
-            <property name="text">
-             <string>Aumentar intervalo</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QPushButton" name="btn1_4">
-            <property name="text">
-             <string>Disminuir Intervalo</string>
+             <string>Apagar Todos los Actuadores</string>
             </property>
            </widget>
           </item>
@@ -450,6 +436,19 @@
             </property>
            </widget>
           </item>
+          <item row="0" column="3">
+           <widget class="QLabel" name="labelPWM1">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>PWM: 0</string>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="0">
            <widget class="QLabel" name="labelMotor2">
             <property name="text">
@@ -483,6 +482,19 @@
             </property>
            </widget>
           </item>
+          <item row="1" column="3">
+           <widget class="QLabel" name="labelPWM2">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>PWM: 0</string>
+            </property>
+           </widget>
+          </item>
           <item row="2" column="0">
            <widget class="QLabel" name="labelMotor3">
             <property name="text">
@@ -513,6 +525,19 @@
             </property>
             <property name="maximum">
              <number>255</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="QLabel" name="labelPWM3">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>PWM: 0</string>
             </property>
            </widget>
           </item>

@@ -26,12 +26,13 @@ public:
     ~MainWindow();
 
 private slots:
-    void onButtonClicked();
     void onConnectClicked();
     void onDisconnectClicked();
     void onRefreshPorts();
     void onSerialDataReceived();
     void updateGraph();
+    void onStartAllActuators();
+    void onStopAllActuators();
 
 private:
     void setupChart();
@@ -71,6 +72,7 @@ private:
     // Slots para control de motores
     void onMotorSliderChanged(int motor, int value);
     void onMotorSpinBoxChanged(int motor, int value);
+    void updatePWMLabels();
     
     // Funciones para la consola
     void appendToConsole(const QString &message, const QString &type = "INFO");
@@ -103,6 +105,11 @@ private:
         double light;
     };
     QList<GraphDataPoint> graphData;
+    
+    // Valores PWM actuales de los motores
+    int currentPWM1;
+    int currentPWM2;
+    int currentPWM3;
 };
 
 #endif // MAINWINDOW_H
