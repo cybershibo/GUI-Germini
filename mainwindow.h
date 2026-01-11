@@ -74,6 +74,12 @@ private:
     void onMotorSpinBoxChanged(int motor, int value);
     void updatePWMLabels();
     
+    // Slots para control del servo
+    void onServoSliderChanged(int value);
+    void onServoSpinBoxChanged(int value);
+    void onSendServoAngle();
+    void updateServoAngleLabel();
+    
     // Funciones para la consola
     void appendToConsole(const QString &message, const QString &type = "INFO");
     void onClearConsole();
@@ -110,6 +116,9 @@ private:
     int currentPWM1;
     int currentPWM2;
     int currentPWM3;
+    
+    // Valor actual del ángulo del servo
+    int currentServoAngle;
 };
 
 #endif // MAINWINDOW_H

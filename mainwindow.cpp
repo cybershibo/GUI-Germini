@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     , currentPWM1(0)
     , currentPWM2(0)
     , currentPWM3(0)
+    , currentServoAngle(20)
 {
     ui->setupUi(this);
 
@@ -87,6 +88,17 @@ MainWindow::MainWindow(QWidget *parent)
         onMotorSpinBoxChanged(3, value);
     });
     
+    // Conectar controles del servo
+    connect(ui->sliderServo, &QSlider::valueChanged, this, [this](int value) {
+        ui->spinBoxServo->setValue(value);
+        onServoSliderChanged(value);
+    });
+    connect(ui->spinBoxServo, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
+        ui->sliderServo->setValue(value);
+        onServoSpinBoxChanged(value);
+    });
+    connect(ui->btnSendServoAngle, &QPushButton::clicked, this, &MainWindow::onSendServoAngle);
+    
     // Conectar botón de limpiar consola
     connect(ui->btnClearConsole, &QPushButton::clicked, this, &MainWindow::onClearConsole);
     
@@ -127,6 +139,9 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Inicializar etiquetas PWM
     updatePWMLabels();
+    
+    // Inicializar etiqueta del servo
+    updateServoAngleLabel();
 }
 
 MainWindow::~MainWindow()
@@ -1062,6 +1077,43 @@ void MainWindow::updatePWMLabels()
     }
     if (ui->labelPWM3) {
         ui->labelPWM3->setText(QString("PWM: %1").arg(currentPWM3));
+    }
+}
+
+void MainWindow::onServoSliderChanged(int value)
+{
+    // Solo actualizar la etiqueta y el spinbox, NO enviar comando
+    // El comando se envía solo cuando se presiona el botón "Enviar Ángulo"
+    currentServoAngle = value;
+    updateServoAngleLabel();
+}
+
+void MainWindow::onServoSpinBoxChanged(int value)
+{
+    // Solo actualizar la etiqueta y el slider, NO enviar comando
+    // El comando se envía solo cuando se presiona el botón "Enviar Ángulo"
+    currentServoAngle = value;
+    updateServoAngleLabel();
+}
+
+void MainWindow::onSendServoAngle()
+{
+    // Enviar comando al firmware para establecer el ángulo del servo
+    int angle = ui->spinBoxServo->value();
+    sendCommand(QString("SET_SERVO:%1").arg(angle));
+    
+    // Actualizar valor actual
+    currentServoAngle = angle;
+    updateServoAngleLabel();
+    
+    ui->statusbar->showMessage(QString("Ángulo del servo enviado: %1°").arg(angle), 2000);
+    appendToConsole(QString("Enviando ángulo del servo: %1°").arg(angle), "INFO");
+}
+
+void MainWindow::updateServoAngleLabel()
+{
+    if (ui->labelServoAngle) {
+        ui->labelServoAngle->setText(QString("Ángulo: %1°").arg(currentServoAngle));
     }
 }
 

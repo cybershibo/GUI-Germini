@@ -541,6 +541,62 @@
             </property>
            </widget>
           </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="labelServo">
+            <property name="text">
+             <string>Servo Compuerta (Pin 14):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QSlider" name="sliderServo">
+            <property name="minimum">
+             <number>20</number>
+            </property>
+            <property name="maximum">
+             <number>155</number>
+            </property>
+            <property name="value">
+             <number>20</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QSpinBox" name="spinBoxServo">
+            <property name="minimum">
+             <number>20</number>
+            </property>
+            <property name="maximum">
+             <number>155</number>
+            </property>
+            <property name="value">
+             <number>20</number>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3">
+           <widget class="QLabel" name="labelServoAngle">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Ángulo: 20°</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="4">
+           <widget class="QPushButton" name="btnSendServoAngle">
+            <property name="text">
+             <string>Enviar Ángulo</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item>
