@@ -1,0 +1,31 @@
+@startuml Control_PID
+title G. Control PID
+
+start
+
+:Usuario Configura Parámetros PID;
+
+:Identificar Parámetro;
+
+if (¿Setpoint?) then (SÍ)
+  :Enviar SET_SETPOINT:X;
+elseif (¿Kp?) then (SÍ)
+  :Enviar SET_KP:X;
+elseif (¿Ki?) then (SÍ)
+  :Enviar SET_KI:X;
+elseif (¿Kd?) then (SÍ)
+  :Enviar SET_KD:X;
+elseif (¿Activar?) then (SÍ)
+  :Enviar ENABLE_PID;
+elseif (¿Desactivar?) then (SÍ)
+  :Enviar DISABLE_PID;
+endif
+
+:Actualizar UI;
+note right
+  - Estado PID
+  - Salida PID
+end note
+
+stop
+@enduml

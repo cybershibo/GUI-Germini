@@ -1,0 +1,17 @@
+@startuml Control_Motores
+title F. Control de Motores
+
+start
+
+:Usuario Mueve Slider/SpinBox;
+
+:Sincronizar Slider ↔ SpinBox;
+
+:Construir Comando SET_MOTORX:Y;
+
+:Enviar por Serial;
+
+:Actualizar Label PWM;
+
+stop
+@enduml

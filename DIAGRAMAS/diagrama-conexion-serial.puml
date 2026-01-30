@@ -1,0 +1,32 @@
+@startuml Conexion_Serial
+title B. Conexión Serial
+
+start
+
+:Usuario: Conectar;
+
+if (¿Puerto válido?) then (NO)
+  :Mostrar Error;
+  stop
+else (SÍ)
+  :Configurar Serial;
+  note right
+    - Puerto
+    - Baudrate
+    - Paridad
+  end note
+  
+  :Abrir Puerto Serial;
+  
+  if (¿Éxito?) then (FALLO)
+    :Mostrar Error;
+    stop
+  else (ÉXITO)
+    :Habilitar Pestañas;
+    :Iniciar Timer;
+    :Actualizar UI;
+  endif
+endif
+
+stop
+@enduml

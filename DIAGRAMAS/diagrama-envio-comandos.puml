@@ -1,0 +1,40 @@
+@startuml Envio_Comandos
+title D. Envío de Comandos
+
+start
+
+:Evento de Usuario;
+note right
+  (Slider, Botón, etc)
+end note
+
+:Identificar Tipo de Evento;
+
+if (¿Slider Motor?) then (SÍ)
+  :Construir SET_MOTORX:Y;
+elseif (¿SpinBox Motor?) then (SÍ)
+  :Construir SET_MOTORX:Y;
+elseif (¿Botón Servo?) then (SÍ)
+  :Construir SET_SERVO:Y;
+elseif (¿Botón PID?) then (SÍ)
+  :Construir ENABLE/DISABLE_PID;
+elseif (¿Setpoint PID?) then (SÍ)
+  :Construir SET_SETPOINT:Y;
+elseif (¿KP/KI/KD?) then (SÍ)
+  :Construir SET_KP/KI/KD:Y;
+endif
+
+if (¿Serial abierto?) then (NO)
+  :Mostrar Advertencia;
+  stop
+else (SÍ)
+  :Enviar Comando;
+  note right
+    Serial.write()
+  end note
+  
+  :Mostrar en Consola [TX] comando;
+endif
+
+stop
+@enduml

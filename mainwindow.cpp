@@ -43,6 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
     , currentPWM2(0)
     , currentPWM3(0)
     , currentServoAngle(20)
+    , pidActive(false)
 {
     ui->setupUi(this);
 
@@ -792,7 +793,63 @@ void MainWindow::onSerialDataReceived()
             int outputStart = 11; // "PID_OUTPUT:" tiene 11 caracteres
             int outputEnd = dataString.indexOf(" ERROR:");
             if (outputEnd > outputStart) {
-                QString outputStr = dataString.mid(outputStart, outputEnd - outputStart);
+                QString outputStr = dataString.mid(outputStart, outputEnd - outputStart).trimmed();
+                bool ok;
+                double output = outputStr.toDouble(&ok);
+                if (ok) {
+                    ui->labelPIDOutput->setText(QString("Salida PID: %1").arg(output, 0, 'f', 1));
+                } else {
+                    ui->labelPIDOutput->setText(QString("Salida PID: Error (\"%1\")").arg(outputStr));
+                }
+            } else {
+                // Intentar parsear sin buscar " ERROR:"
+                QString outputStr = dataString.mid(outputStart).trimmed();
+                // Buscar el primer espacio o fin de línea
+                int spaceIndex = outputStr.indexOf(' ');
+                if (spaceIndex > 0) {
+                    outputStr = outputStr.left(spaceIndex);
+                }
+                bool ok;
+                double output = outputStr.toDouble(&ok);
+                if (ok) {
+                    ui->labelPIDOutput->setText(QString("Salida PID: %1").arg(output, 0, 'f', 1));
+                }
+            }
+        }
+        // Procesar ángulo del servo desde el PID
+        else if (dataString.contains("SERVO_ANGLE:")) {
+            int angleStart = dataString.indexOf("SERVO_ANGLE:") + 12;
+            if (angleStart > 11) {
+                QString angleStr = dataString.mid(angleStart).trimmed();
+                // Buscar el primer espacio o fin de línea
+                int spaceIndex = angleStr.indexOf(' ');
+                if (spaceIndex > 0) {
+                    angleStr = angleStr.left(spaceIndex);
+                }
+                bool ok;
+                int angle = angleStr.toInt(&ok);
+                if (ok) {
+                    // Actualizar el ángulo del servo en la interfaz si no está en modo PID
+                    if (!pidActive) {
+                        currentServoAngle = angle;
+                        updateServoAngleLabel();
+                    }
+                }
+            }
+        }
+        // Procesar mensaje PID_STATUS adicional (formato más simple)
+        else if (dataString.startsWith("PID_STATUS:")) {
+            // Formato: PID_STATUS:OUTPUT=87.5,ANGLE=87
+            QString statusStr = dataString.mid(11); // Remover "PID_STATUS:"
+            int outputStart = statusStr.indexOf("OUTPUT=");
+            int angleStart = statusStr.indexOf("ANGLE=");
+            
+            if (outputStart >= 0) {
+                QString outputStr = statusStr.mid(outputStart + 7); // "OUTPUT=" tiene 7 caracteres
+                int commaIndex = outputStr.indexOf(',');
+                if (commaIndex > 0) {
+                    outputStr = outputStr.left(commaIndex);
+                }
                 bool ok;
                 double output = outputStr.toDouble(&ok);
                 if (ok) {
@@ -801,10 +858,10 @@ void MainWindow::onSerialDataReceived()
             }
         }
         // Procesar estado del PID
-        else if (dataString == "PID ACTIVADO") {
+        else if (dataString == "PID ACTIVADO" || dataString.contains("PID ACTIVADO")) {
             ui->labelPIDStatus->setText("Estado del PID: Activado");
         }
-        else if (dataString == "PID DESACTIVADO") {
+        else if (dataString == "PID DESACTIVADO" || dataString.contains("PID DESACTIVADO")) {
             ui->labelPIDStatus->setText("Estado del PID: Desactivado");
             ui->labelPIDOutput->setText("Salida PID: --");
         }

@@ -1,0 +1,32 @@
+@startuml Estados_Aplicacion
+title Estados de la Aplicación
+
+[*] --> EstadoInicial : Inicio
+
+state EstadoInicial {
+  - Serial cerrado
+  - Pestañas deshabilitadas
+  - Gráfico detenido
+}
+
+EstadoInicial --> EstadoConectado : Usuario: Conectar
+
+state EstadoConectado {
+  - Serial abierto
+  - Pestañas habilitadas
+  - Gráfico activo
+  - Recibiendo datos
+}
+
+EstadoConectado --> EstadoDesconectado : Usuario: Desconectar
+
+state EstadoDesconectado {
+  - Serial cerrado
+  - Pestañas deshabilitadas
+  - Gráfico detenido
+}
+
+EstadoDesconectado --> EstadoConectado : Usuario: Conectar
+EstadoDesconectado --> [*] : Cerrar aplicación
+
+@enduml

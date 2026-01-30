@@ -119,6 +119,9 @@ private:
     
     // Valor actual del ángulo del servo
     int currentServoAngle;
+    
+    // Estado del PID (para bloquear control manual)
+    bool pidActive;
 };
 
 #endif // MAINWINDOW_H

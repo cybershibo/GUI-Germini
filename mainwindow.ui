@@ -452,7 +452,7 @@
           <item row="1" column="0">
            <widget class="QLabel" name="labelMotor2">
             <property name="text">
-             <string>Abanico Frio (Pin 16):</string>
+             <string>Abanico Caliente (Pin 16):</string>
             </property>
            </widget>
           </item>
@@ -498,7 +498,7 @@
           <item row="2" column="0">
            <widget class="QLabel" name="labelMotor3">
             <property name="text">
-             <string>Abanico Caliente(Pin 17):</string>
+             <string>Abanico Frio(Pin 17):</string>
             </property>
            </widget>
           </item>
@@ -562,7 +562,7 @@
             <property name="orientation">
              <enum>Qt::Orientation::Horizontal</enum>
             </property>
-            </widget>
+           </widget>
           </item>
           <item row="3" column="2">
            <widget class="QSpinBox" name="spinBoxServo">

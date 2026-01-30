@@ -1,0 +1,28 @@
+@startuml Actualizacion_Grafico
+title E. Actualización del Gráfico
+
+start
+
+:Timer Dispara (cada 100ms);
+
+:Calcular Tiempo Transcurrido;
+
+if (¿Valores Válidos?) then (NO)
+  stop
+else (SÍ)
+  if (¿Variable Seleccionada? (Checkbox)) then (SÍ)
+    :Agregar Punto a Serie;
+    :Guardar en graphData (para CSV);
+  endif
+  
+  if (¿Puntos > MAX?) then (SÍ)
+    :Eliminar Puntos Antiguos;
+  endif
+  
+  :Ajustar Rango Eje X (últimos 60 seg);
+  :Ajustar Rango Eje Y (dinámico);
+  :Actualizar Vista Gráfico;
+endif
+
+stop
+@enduml

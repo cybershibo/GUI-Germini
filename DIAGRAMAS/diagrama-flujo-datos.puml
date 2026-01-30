@@ -1,0 +1,22 @@
+@startuml Flujo_Datos
+title Flujo de Datos (Data Flow)
+
+participant "ESP32\n(Firmware)" as ESP32
+participant "QSerialPort\n(Recepción)" as Serial
+participant "Buffer\nSerial" as Buffer
+participant "Parsear Datos" as Parser
+participant "Variables Globales" as Vars
+participant "UI Labels" as UI
+participant "graphData" as Graph
+participant "Consola" as Console
+
+ESP32 -> Serial : Serial (115200 baud)
+Serial -> Buffer : Datos recibidos
+Buffer -> Parser : Línea completa
+Parser -> Parser : Parsear\n- DATA:...\n- MOTOR:...\n- PID:...
+Parser -> Vars : Actualizar variables\n(currentTemperature1, etc.)
+Parser -> UI : Actualizar Labels UI
+Parser -> Graph : Agregar a graphData
+Parser -> Console : Mostrar en Consola
+
+@enduml

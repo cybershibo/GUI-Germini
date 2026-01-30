@@ -1,0 +1,58 @@
+@startuml Diagrama_Flujo_Completo_GUI
+title Diagrama de Flujo Completo - GUI Germini
+
+start
+
+:INICIALIZAR;
+note right
+  - Ventana
+  - Gráfico
+  - Serial
+  - Señales
+end note
+
+partition "BUCLE DE EVENTOS (Qt)" {
+  
+  fork
+    :Evento Usuario;
+    :Identificar Tipo Evento;
+    
+    if (¿Conectar?) then (SÍ)
+      :Abrir Serial;
+    elseif (¿Desconectar?) then (SÍ)
+      :Cerrar Serial;
+    elseif (¿Slider Motor?) then (SÍ)
+      :Enviar SET_MOTOR;
+    elseif (¿Botón Servo?) then (SÍ)
+      :Enviar SET_SERVO;
+    elseif (¿PID Config?) then (SÍ)
+      :Enviar SET_KP/KI/KD;
+    elseif (¿Activar PID?) then (SÍ)
+      :Enviar ENABLE_PID;
+    elseif (¿Exportar?) then (SÍ)
+      :Guardar CSV;
+    endif
+  fork again
+    :Datos Serial;
+    :Leer Buffer;
+    :Procesar Datos;
+    note right
+      - Parsear formato
+      - Actualizar variables
+    end note
+  end fork
+  
+  :Actualizar UI;
+  note right
+    - Métricas
+    - Gráfico
+    - Consola
+  end note
+}
+
+repeat
+repeat while (¿Aplicación activa?) is (Sí)
+-> No;
+
+stop
+@enduml

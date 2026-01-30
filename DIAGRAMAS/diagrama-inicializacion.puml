@@ -1,0 +1,29 @@
+@startuml Inicializacion_GUI
+title A. Inicialización (Constructor)
+
+start
+
+:CONSTRUCTOR;
+
+:Crear QSerialPort;
+
+:Configurar Gráfico;
+note right
+  - Crear series
+  - Configurar ejes
+  - Iniciar timer
+end note
+
+:Conectar Señales;
+note right
+  - Botones
+  - Sliders
+  - Serial readyRead
+end note
+
+:Cargar Puertos Serial Disponibles;
+
+:VENTANA LISTA;
+
+stop
+@enduml

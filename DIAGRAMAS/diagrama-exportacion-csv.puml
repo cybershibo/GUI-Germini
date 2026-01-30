@@ -1,0 +1,31 @@
+@startuml Exportacion_CSV
+title H. Exportación CSV
+
+start
+
+:Usuario: Exportar CSV;
+
+if (¿Hay datos?) then (NO)
+  :Mostrar Mensaje;
+  stop
+else (SÍ)
+  if (¿Variable Seleccionada?) then (NO)
+    :Mostrar Advertencia;
+    stop
+  else (SÍ)
+    :Diálogo Guardar Archivo;
+    
+    if (¿Usuario canceló?) then (SÍ)
+      stop
+    else (Guardar)
+      :Crear Archivo CSV;
+      :Escribir Encabezado (según checkboxes);
+      :Escribir Datos (solo seleccionados);
+      :Cerrar Archivo;
+      :Mostrar Confirmación;
+    endif
+  endif
+endif
+
+stop
+@enduml

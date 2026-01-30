@@ -1,0 +1,16 @@
+@startuml Flujo_Comandos
+title Flujo de Comandos (Command Flow)
+
+participant "Usuario\n(Interfaz)" as User
+participant "Construir\nComando" as Builder
+participant "sendCommand()" as Send
+participant "QSerialPort\n(Envío)" as Serial
+participant "ESP32\n(Firmware)" as ESP32
+
+User -> Builder : Slider/SpinBox\nBotón\nCheckbox
+Builder -> Builder : Construir Comando (String)
+Builder -> Send : sendCommand()
+Send -> Serial : Serial.write()
+Serial -> ESP32 : Serial (115200 baud)
+
+@enduml

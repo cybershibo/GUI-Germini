@@ -1,0 +1,43 @@
+@startuml Recepcion_Datos
+title C. Recepción de Datos Seriales
+
+start
+
+:Datos Disponibles en Serial Port;
+
+:Leer Datos;
+:Agregar a Buffer;
+
+if (¿Línea completa? (termina en \n)) then (NO)
+  stop
+else (SÍ)
+  :Procesar Línea;
+  
+  if (¿Formato DATA?) then (SÍ)
+    :Parsear Datos;
+    note right
+      - Temp1, Temp2
+      - Hum1, Hum2
+      - Promedios
+      - Luz
+    end note
+    
+    :Actualizar Variables;
+    :Actualizar UI;
+    :Actualizar Gráfico;
+  endif
+  
+  if (¿Formato MOTOR?) then (SÍ)
+    :Actualizar PWM;
+    :Sincronizar Sliders;
+  endif
+  
+  if (¿Formato PID?) then (SÍ)
+    :Actualizar Estado PID y Salida;
+  endif
+  
+  :Mostrar en Consola;
+endif
+
+stop
+@enduml
