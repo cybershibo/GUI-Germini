@@ -1,7 +1,13 @@
 # Instructivo de uso — Germini Control Panel
 
-Este documento describe el uso del panel de control **Germini Control Panel**, una aplicación de escritorio (Qt) que se comunica por puerto serial con un microcontrolador (por ejemplo, ESP32) para monitorear sensores DHT22 (temperatura y humedad), sensor de luz, y controlar actuadores (Peltier, ventiladores, servo) y un controlador PID de temperatura.
+Desarrollado para el proyecto final de semestre de la Maestría en Ciencias de la Ingeniería del ITC.
 
+**Integrantes**
+
+- Anette Valeria Altamirano Cabrera
+- David Rios Torres
+- Rommel Gutierrez Grajeda
+- Armando Payán Angulo
 ---
 
 ## Requisitos previos
@@ -29,11 +35,11 @@ Solo después de **Conectar** podrás usar las demás pestañas.
 
 En esta pestaña se definen los parámetros generales antes de conectar. Cuando la aplicación está desconectada, el resto de pestañas aparece bloqueado; la configuración es el primer paso.
 
-![Vista de la pestaña Configuración con las demás pestañas bloqueadas](INSTRUCCIONES/Configuracion%20-%20bloqueado.jpeg)
+![Vista de la pestaña Configuración con las demás pestañas bloqueadas](Configuracion%20-%20bloqueado.jpeg)
 
 **Elementos:**
 
-- **Velocidad Serial (Baud Rate)**: debe coincidir con la configurada en el firmware del microcontrolador. Valores típicos: 9600, 19200, 38400, 57600, **115200** (muy usado en ESP32).
+- **Velocidad Serial (Baud Rate)**: debe coincidir con la configurada en el firmware del microcontrolador. Valores típicos: 9600, 19200, 38400, 57600, **115200**.
 - **Intervalo de actualización (ms)**: intervalo en milisegundos para la actualización de datos (entre 100 y 5000 ms; por defecto 1000 ms).
 
 Después de elegir puerto y velocidad, usa **Conectar** en la barra superior. Al conectar, las pestañas **Control**, **Control PID**, **Graph** y **Consola** se habilitan.
@@ -44,7 +50,7 @@ Después de elegir puerto y velocidad, usa **Conectar** en la barra superior. Al
 
 Aquí se visualizan las lecturas de los sensores y se controlan los actuadores de forma manual.
 
-![Vista de la pestaña Control en funcionamiento](INSTRUCCIONES/Control%20-%20funcionando.jpeg)
+![Vista de la pestaña Control en funcionamiento](Control%20-%20funcionando.jpeg)
 
 **Métricas de sensores:**
 
@@ -70,7 +76,7 @@ Los cambios de PWM en sliders/spinboxes se envían en tiempo real; el servo solo
 
 En esta pestaña se configura y activa/desactiva el controlador PID de temperatura en el dispositivo.
 
-![Vista de la pestaña Control PID en funcionamiento](INSTRUCCIONES/pid%20-%20funcionando.jpeg)
+![Vista de la pestaña Control PID en funcionamiento](pid%20-%20funcionando.jpeg)
 
 **Parámetros:**
 
@@ -99,15 +105,15 @@ Casillas para elegir qué series se dibujan: Temp #1, Temp #2, Temp Promedio, Hu
 
 - Solo temperatura (por ejemplo Temp #1, #2 o promedio):
 
-![Gráfica mostrando solo temperatura](INSTRUCCIONES/Grafica%20-%20solo%20temperatura.jpeg)
+![Gráfica mostrando solo temperatura](Grafica%20-%20solo%20temperatura.jpeg)
 
 - Solo humedad (por ejemplo Hum #1, #2 o promedio):
 
-![Gráfica mostrando solo humedad](INSTRUCCIONES/Grafica%20-%20solo%20humedad.jpeg)
+![Gráfica mostrando solo humedad](Grafica%20-%20solo%20humedad.jpeg)
 
 - Todas las variables seleccionadas:
 
-![Gráfica con todos los elementos](INSTRUCCIONES/Grafica%20-%20todos%20los%20elementos.jpeg)
+![Gráfica con todos los elementos](Grafica%20-%20todos%20los%20elementos.jpeg)
 
 **Exportar a CSV:**  
 Guarda en un archivo CSV los datos registrados (tiempo y las variables que tengas seleccionadas en las casillas). Debes elegir al menos una variable para poder exportar.
